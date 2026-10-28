@@ -200,3 +200,60 @@ class ProductPerformanceReport(BaseModel):
     sort_dir: str
     rows: list[ProductPerformanceRow]
     totals: ProductPerformanceTotals
+
+
+# --- Product performance: one product ---------------------------------------
+
+
+class ProductPerformanceProduct(BaseModel):
+    product_id: int
+    name: str
+    sku: str | None = None
+    unit: str | None = None
+    maintain_inventory: bool
+    price: float  # catalogue selling price
+    purchase_price: float  # catalogue purchase price; the cost fallback
+    reorder_level: float
+    current_stock: float | None = None  # None when the product isn't stock-tracked
+
+
+class ProductPerformanceMonthlyRow(BaseModel):
+    """One month, under the same rules as ProductPerformanceRow. Units, money,
+    COGS and profit sum exactly to the summary row."""
+
+    month: str  # "2026-03"
+    label: str  # "Mar 26"
+    units_sold: float
+    units_returned: float
+    net_units_sold: float
+    units_bought: float
+    units_purchase_returned: float
+    net_units_bought: float
+    average_selling_price: float | None = None  # this month's sales_value / units_sold
+    # What was paid this month (all suppliers), not the period cost COGS uses.
+    average_buying_price: float | None = None
+    sales_value: float
+    return_value: float
+    revenue: float
+    purchase_value: float
+    purchase_return_value: float
+    purchase_spend: float
+    cogs: float | None = None  # net units x the period's unit cost
+    gross_profit: float | None = None
+    margin_pct: float | None = None
+    profit_per_unit: float | None = None
+
+
+class ProductSalesVelocity(BaseModel):
+    elapsed_days: int  # days of the period up to today
+    daily_sales_rate: float | None = None  # net units sold per elapsed day
+    stock_cover_days: float | None = None  # current stock / daily_sales_rate
+
+
+class ProductPerformanceDetail(BaseModel):
+    currency_code: str
+    period: ReportPeriod
+    product: ProductPerformanceProduct
+    summary: ProductPerformanceRow | None = None  # None when nothing moved in the period
+    monthly_rows: list[ProductPerformanceMonthlyRow]
+    velocity: ProductSalesVelocity

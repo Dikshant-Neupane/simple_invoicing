@@ -1,6 +1,7 @@
-import { useState, type ReactNode } from 'react';
+import { useState, type MouseEvent, type ReactNode } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronRight } from 'lucide-react';
 import { fetchProductPerformance } from '../../features/analytics/api';
 import {
   EMPTY_CELL,
@@ -9,6 +10,7 @@ import {
   formatPctOrDash,
   isLoss,
   nextSort,
+  productDetailHref,
   usesCurrentPriceCost,
 } from '../../features/analytics/productPerformance';
 import { analyticsQueryKeys } from '../../features/analytics/queryKeys';
@@ -24,7 +26,7 @@ type Column = {
   key: PerformanceSortBy;
   label: string;
   numeric?: boolean;
-  render: (row: ProductPerformanceRow, currency: string) => ReactNode;
+  render: (row: ProductPerformanceRow, currency: string, href: string) => ReactNode;
 };
 
 const lossClass = (value: number | null) => (isLoss(value) ? ' analytics-loss-text' : '');
@@ -33,9 +35,14 @@ const COLUMNS: Column[] = [
   {
     key: 'name',
     label: 'Product',
-    render: (row) => (
+    // A real link, so the product page opens with keyboard, middle-click or
+    // "open in new tab"; the row's own click handler covers the rest of it.
+    render: (row, _currency, href) => (
       <>
-        {row.name}
+        <Link className="product-performance__link" to={href}>
+          {row.name}
+          <ChevronRight size={14} aria-hidden="true" />
+        </Link>
         {row.sku && <span className="product-performance__sku">{row.sku}</span>}
       </>
     ),
@@ -128,6 +135,8 @@ const COLUMNS: Column[] = [
 const LOSS_COLUMNS = new Set<PerformanceSortBy>(['gross_profit', 'margin_pct', 'profit_per_unit']);
 
 export default function ProductPerformanceTab({ filters }: { filters: AnalyticsFilters }) {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [sort, setSort] = useState<{ sortBy: PerformanceSortBy; sortDir: SortDir }>({
     sortBy: 'revenue',
     sortDir: 'desc',
@@ -207,11 +216,11 @@ export default function ProductPerformanceTab({ filters }: { filters: AnalyticsF
         Cost is each product's average purchase price in this period. Products with no purchases
         in the period use their current purchase price
         {totals.current_price_product_count > 0 ? ` (${totals.current_price_product_count} here, marked "current price")` : ''};
-        products with neither show "—".
+        products with neither show "—". Select a product for its month-by-month trend.
       </p>
 
       <div className="analytics-table-scroll">
-        <table className="invoice-feed-table">
+        <table className="invoice-feed-table product-performance__table">
           <thead>
             <tr>
               {COLUMNS.map((column) => {
@@ -245,20 +254,28 @@ export default function ProductPerformanceTab({ filters }: { filters: AnalyticsF
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
-              <tr key={row.product_id}>
-                {COLUMNS.map((column) => (
-                  <td
-                    key={column.key}
-                    className={`${column.numeric ? 'text-right' : ''}${
-                      LOSS_COLUMNS.has(column.key) ? lossClass(row.gross_profit) : ''
-                    }`}
-                  >
-                    {column.render(row, currency)}
-                  </td>
-                ))}
-              </tr>
-            ))}
+            {rows.map((row) => {
+              const href = productDetailHref(row.product_id, searchParams);
+              const openRow = (event: MouseEvent<HTMLTableRowElement>) => {
+                // The name link navigates itself (and may be opening a new tab).
+                if ((event.target as HTMLElement).closest('a')) return;
+                navigate(href);
+              };
+              return (
+                <tr key={row.product_id} onClick={openRow} title={`Open ${row.name}`}>
+                  {COLUMNS.map((column) => (
+                    <td
+                      key={column.key}
+                      className={`${column.numeric ? 'text-right' : ''}${
+                        LOSS_COLUMNS.has(column.key) ? lossClass(row.gross_profit) : ''
+                      }`}
+                    >
+                      {column.render(row, currency, href)}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
           </tbody>
           <tfoot>
             <tr>

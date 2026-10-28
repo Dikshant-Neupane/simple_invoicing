@@ -38,6 +38,17 @@ export const analyticsQueryKeys = {
       sortBy,
       sortDir,
     ] as const,
+  productPerformanceDetail: (productId: number, filters: AnalyticsFilters) =>
+    [
+      'analytics',
+      'product-performance',
+      'detail',
+      productId,
+      filters.financialYearId ?? 'all',
+      filters.fromDate ?? 'auto',
+      filters.toDate ?? 'auto',
+      filters.ledgerId ?? 'all',
+    ] as const,
   profitLoss: (filters: AnalyticsFilters) =>
     [
       'analytics',

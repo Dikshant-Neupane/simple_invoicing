@@ -199,6 +199,52 @@ export type ProductPerformanceReport = {
   totals: ProductPerformanceTotals;
 };
 
+export type ProductPerformanceProduct = {
+  product_id: number;
+  name: string;
+  sku: string | null;
+  unit: string | null;
+  maintain_inventory: boolean;
+  /** Catalogue prices, not what was transacted. */
+  price: number;
+  purchase_price: number;
+  reorder_level: number;
+  /** null when the product isn't stock-tracked. */
+  current_stock: number | null;
+};
+
+/**
+ * One month of a product, under the same rules as its period row: units,
+ * money, COGS and profit sum exactly to `summary`. `average_buying_price` is
+ * what was paid that month, not the period cost COGS is taken at.
+ */
+export type ProductPerformanceMonthlyRow = Omit<
+  ProductPerformanceRow,
+  'product_id' | 'name' | 'sku' | 'cost_basis' | 'current_stock'
+> & {
+  month: string;
+  label: string;
+};
+
+export type ProductSalesVelocity = {
+  /** Days of the period up to today. */
+  elapsed_days: number;
+  /** Net units sold per elapsed day; null when nothing sold. */
+  daily_sales_rate: number | null;
+  /** Current stock / daily_sales_rate; null when undefined or untracked. */
+  stock_cover_days: number | null;
+};
+
+export type ProductPerformanceDetail = {
+  currency_code: string;
+  period: ReportPeriod;
+  product: ProductPerformanceProduct;
+  /** The list row for this product and period; null when nothing moved. */
+  summary: ProductPerformanceRow | null;
+  monthly_rows: ProductPerformanceMonthlyRow[];
+  velocity: ProductSalesVelocity;
+};
+
 /** Filters shared by both reports; product-only fields are optional. */
 export type AnalyticsFilters = {
   voucherType: VoucherType;

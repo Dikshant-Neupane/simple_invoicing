@@ -17,12 +17,16 @@ from src.schemas.analytics import (
     MonthlySalesReport,
     MonthlySalesRow,
     MonthlySalesTotals,
+    ProductPerformanceDetail,
+    ProductPerformanceMonthlyRow,
+    ProductPerformanceProduct,
     ProductPerformanceReport,
     ProductPerformanceRow,
     ProductPerformanceTotals,
     ProductSalesReport,
     ProductSalesRow,
     ProductSalesTotals,
+    ProductSalesVelocity,
     ProfitLossCustomerRow,
     ProfitLossMonthlyRow,
     ProfitLossProductRow,
@@ -33,6 +37,7 @@ from src.schemas.analytics import (
 from src.services.analytics_reports import (
     average_of,
     build_monthly_sales_report,
+    build_product_performance_detail,
     build_product_performance_report,
     build_product_sales_report,
     build_profit_loss_report,
@@ -586,6 +591,47 @@ def get_product_performance(
         sort_dir=sort_dir,
         rows=[ProductPerformanceRow(**_decimals_to_floats(row)) for row in data.rows],
         totals=ProductPerformanceTotals(**_decimals_to_floats(data.totals)),
+    )
+
+
+@router.get("/product-performance/{product_id}", response_model=ProductPerformanceDetail)
+def get_product_performance_detail(
+    product_id: int,
+    financial_year_id: int | None = Query(None),
+    from_date: date | None = Query(None),
+    to_date: date | None = Query(None),
+    ledger_id: int | None = Query(None),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+    active_company: CompanyProfile = Depends(get_active_company),
+):
+    """One product's performance row plus a monthly series. The summary is the
+    same row the list returns for this product and period."""
+    period = _resolve_period(
+        db,
+        company_id=active_company.id,
+        financial_year_id=financial_year_id,
+        from_date=from_date,
+        to_date=to_date,
+    )
+    data = build_product_performance_detail(
+        db,
+        company_id=active_company.id,
+        product_id=product_id,
+        from_date=period.from_date,
+        to_date=period.to_date,
+        ledger_id=ledger_id,
+    )
+    if data is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    return ProductPerformanceDetail(
+        currency_code=active_company.currency_code or "USD",
+        period=period,
+        product=ProductPerformanceProduct(**_decimals_to_floats(data.product)),
+        summary=ProductPerformanceRow(**_decimals_to_floats(data.summary)) if data.summary else None,
+        monthly_rows=[ProductPerformanceMonthlyRow(**_decimals_to_floats(row)) for row in data.monthly_rows],
+        velocity=ProductSalesVelocity(**_decimals_to_floats(data.velocity)),
     )
 
 

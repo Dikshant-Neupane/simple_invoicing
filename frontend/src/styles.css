@@ -4654,6 +4654,130 @@ a.invoice-row {
   cursor: help;
 }
 
+/* The product name opens its page. Looks like the cell text until hovered —
+   the whole row is the target, the link is what keyboards and new tabs use. */
+.product-performance__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.product-performance__link svg {
+  color: var(--muted);
+  transition: transform 160ms ease, color 160ms ease;
+}
+
+.product-performance__table tbody tr:hover .product-performance__link,
+.product-performance__link:focus-visible {
+  color: var(--accent);
+}
+
+.product-performance__table tbody tr:hover .product-performance__link svg {
+  color: var(--accent);
+  transform: translateX(2px);
+}
+
+/* Fourteen columns scroll sideways on any phone; keep the product name pinned
+   so a figure never loses its row label. Opaque, or scrolled cells show
+   through. */
+.product-performance__table tbody td:first-child,
+.product-performance__table tfoot th:first-child,
+.product-performance__table thead th:first-child,
+.product-detail__table tbody th,
+.product-detail__table tfoot th:first-child,
+.product-detail__table thead th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--bg);
+}
+
+/* The row hover tint (accent at 8%) pre-mixed over --bg, since the pinned
+   cell's own background would otherwise hide it. */
+.product-performance__table tbody tr:hover td:first-child {
+  background: #0e202d;
+}
+
+.product-performance__table thead th:first-child,
+.product-detail__table thead th:first-child {
+  z-index: 2;
+}
+
+/* Totals rows. invoice-feed-table never styled a tfoot, so these cells were
+   falling back to the user agent's 1px, centred <th>. */
+.product-performance__table tfoot th,
+.product-detail__table tfoot th {
+  padding: 12px;
+  border-top: 1px solid var(--line-strong);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.product-performance__table tfoot th:first-child,
+.product-detail__table tfoot th:first-child {
+  text-align: left;
+}
+
+/* ── Product performance: one product (/analytics/products/:id) ───── */
+.product-detail__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+
+/* Two charts a row where there is room for twelve months each, one below. */
+.product-detail__charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 1100px) {
+  .product-detail__charts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.product-detail__chart {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 12px 8px;
+}
+
+.product-detail__chart-title {
+  margin: 0 4px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.product-detail__chart-caption {
+  margin: 0 4px 8px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+/* Month rows are a readout, not a link like the report rows they sit among. */
+.product-detail__table tbody tr {
+  cursor: default;
+}
+
+.product-detail__table tbody th {
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.product-detail__quiet td {
+  color: var(--muted);
+}
+
 .chart-frame {
   background: var(--bg-card);
   border: 1px solid var(--line);

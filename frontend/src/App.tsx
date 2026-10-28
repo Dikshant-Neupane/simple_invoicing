@@ -43,9 +43,10 @@ import SettingsOverviewPage from './pages/settings/SettingsOverviewPage';
 import { LEGACY_REDIRECTS } from './config/navigation';
 import Layout from './components/Layout';
 
-// Lazily loaded: this is the only route that pulls in recharts (~100kb gz), and
-// every other route here is imported eagerly — they shouldn't pay for it.
+// Lazily loaded: these are the only routes that pull in recharts (~100kb gz),
+// and every other route here is imported eagerly — they shouldn't pay for it.
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
+const ProductPerformancePage = lazy(() => import('./pages/analytics/ProductPerformancePage'));
 
 // Browse is the marketplace's heaviest page and the one an instance with no
 // connection never opens, so it isn't in the main bundle either.
@@ -211,6 +212,7 @@ function AppRoutes() {
       <Route path="/ledgers/:id" element={<Protected><CompanyRequired><Layout><LedgerViewPage /></Layout></CompanyRequired></Protected>} />
       <Route path="/ledgers/:id/edit" element={<Protected><CompanyRequired><Layout><LedgerCreatePage /></Layout></CompanyRequired></Protected>} />
       <Route path="/analytics" element={<Protected><CompanyRequired><Layout><Suspense fallback={<div className="empty-state">Loading analytics…</div>}><AnalyticsPage /></Suspense></Layout></CompanyRequired></Protected>} />
+      <Route path="/analytics/products/:productId" element={<Protected><CompanyRequired><Layout><Suspense fallback={<div className="empty-state">Loading analytics…</div>}><ProductPerformancePage /></Suspense></Layout></CompanyRequired></Protected>} />
       <Route path="/day-book" element={<Protected><CompanyRequired><Layout><DayBookPage /></Layout></CompanyRequired></Protected>} />
       <Route path="/tax-ledger" element={<Protected><CompanyRequired><Layout><TaxLedgerPage /></Layout></CompanyRequired></Protected>} />
       <Route path="/gstr1" element={<Protected><CompanyRequired><Layout><Gstr1FilingPage /></Layout></CompanyRequired></Protected>} />

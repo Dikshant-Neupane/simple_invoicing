@@ -3,6 +3,7 @@ import type {
   AnalyticsFilters,
   MonthlySalesReport,
   PerformanceSortBy,
+  ProductPerformanceDetail,
   ProductPerformanceReport,
   ProductSalesReport,
   ProductSortBy,
@@ -69,6 +70,18 @@ export async function fetchProductPerformance(
       sort_by: sortBy,
       sort_dir: sortDir,
     },
+    timeout: REPORT_TIMEOUT_MS,
+  });
+  return response.data;
+}
+
+export async function fetchProductPerformanceDetail(
+  productId: number,
+  filters: AnalyticsFilters,
+): Promise<ProductPerformanceDetail> {
+  const response = await api.get<ProductPerformanceDetail>(`/analytics/product-performance/${productId}`, {
+    // The product is in the path; like the list, there is no voucher_type.
+    params: { ...toParams(filters), voucher_type: undefined },
     timeout: REPORT_TIMEOUT_MS,
   });
   return response.data;

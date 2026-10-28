@@ -17,6 +17,8 @@ type Props = {
   showProductFilter?: boolean;
   /** Hidden on reports that cover sales and purchases together. */
   showVoucherType?: boolean;
+  /** "Party" where the ledger can be a supplier as well as a customer. */
+  ledgerLabel?: string;
 };
 
 export default function AnalyticsFilters({
@@ -26,6 +28,7 @@ export default function AnalyticsFilters({
   canReset,
   showProductFilter = false,
   showVoucherType = true,
+  ledgerLabel = 'Customer',
 }: Props) {
   const { fyList } = useFY();
 
@@ -116,7 +119,7 @@ export default function AnalyticsFilters({
           at all. htmlFor rather than wrapping, because the combobox carries a
           clear button and a listbox of its own. */}
       <label className="analytics-filters__field" htmlFor="analytics-ledger">
-        <span>Customer</span>
+        <span>{ledgerLabel}</span>
         <LedgerCombobox
           id="analytics-ledger"
           ledgers={ledgersQuery.data ?? []}
