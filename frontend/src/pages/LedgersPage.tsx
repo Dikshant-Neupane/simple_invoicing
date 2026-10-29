@@ -12,9 +12,7 @@ import {
   Pencil,
   Phone,
   Plus,
-  Search,
   Trash2,
-  X,
 } from 'lucide-react';
 import api, { getApiErrorMessage } from '../api/client';
 import StatusToasts from '../components/StatusToasts';
@@ -24,6 +22,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import EmptyState from '../components/EmptyState';
 import LoadingState from '../components/LoadingState';
 import PageSizeSelect, { readStoredPageSize, storePageSize } from '../components/PageSizeSelect';
+import SearchInput from '../components/SearchInput';
 
 /** Monogram for the row avatar — first letters of the first two words. */
 function ledgerInitials(name: string): string {
@@ -193,37 +192,20 @@ export default function LedgersPage() {
           </div>
 
           <div className="ledger-toolbar">
-            <div className="ledger-search">
-              <label htmlFor="ledger-search" className="sr-only">
-                Search ledgers by name
-              </label>
-              <Search size={16} className="ledger-search__icon" aria-hidden="true" />
-              <input
-                id="ledger-search"
-                className="input ledger-search__input"
-                type="search"
-                placeholder="Search ledgers by name, GST or contact..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-              />
-              {search ? (
-                <button
-                  type="button"
-                  className="ledger-search__clear"
-                  onClick={() => {
-                    setSearch('');
-                    setPage(1);
-                  }}
-                  title="Clear search"
-                  aria-label="Clear search"
-                >
-                  <X size={14} />
-                </button>
-              ) : null}
-            </div>
+            <SearchInput
+              id="ledger-search"
+              wrapperClassName="ledger-search"
+              inputClassName="input ledger-search__input"
+              iconClassName="ledger-search__icon"
+              clearClassName="ledger-search__clear"
+              label="Search ledgers by name"
+              placeholder="Search ledgers by name, GST or contact..."
+              value={search}
+              onChange={(value) => {
+                setSearch(value);
+                setPage(1);
+              }}
+            />
             {!loading && total > 0 ? (
               <p className="ledger-toolbar__count">
                 Showing <strong>{rangeStart}–{rangeEnd}</strong> of {total}

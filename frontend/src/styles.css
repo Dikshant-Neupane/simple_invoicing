@@ -7202,6 +7202,13 @@ a.invoice-row {
   padding-right: 40px;
 }
 
+/* As on the Ledgers search: WebKit draws its own cancel glyph on
+   type=search, and the shared SearchInput renders its own themed one,
+   so the two would overlap. */
+.catalogue-search__input::-webkit-search-cancel-button {
+  display: none;
+}
+
 .catalogue-search__clear {
   position: absolute;
   right: 10px;
