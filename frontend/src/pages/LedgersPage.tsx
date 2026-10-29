@@ -11,7 +11,6 @@ import {
   Mail,
   MapPin,
   Pencil,
-  Phone,
   Plus,
   Trash2,
 } from 'lucide-react';
@@ -20,6 +19,7 @@ import StatusToasts from '../components/StatusToasts';
 import type { CompanyProfile, Ledger, PaginatedLedgers } from '../types/api';
 import formatCurrency from '../utils/formatting';
 import ConfirmDialog from '../components/ConfirmDialog';
+import LedgerCardPhoneChips from '../components/LedgerCardPhoneChips';
 import EmptyState from '../components/EmptyState';
 import LoadingState from '../components/LoadingState';
 import PageSizeSelect, { readStoredPageSize, storePageSize } from '../components/PageSizeSelect';
@@ -322,10 +322,7 @@ export default function LedgersPage() {
                         {ledger.phone_number || ledger.email || ledger.website ? (
                           <div className="ledger-card__contacts">
                             {ledger.phone_number ? (
-                              <span className="ledger-chip">
-                                <Phone size={13} />
-                                {ledger.phone_number}
-                              </span>
+                              <LedgerCardPhoneChips phone={ledger.phone_number} />
                             ) : null}
                             {ledger.email ? (
                               <span className="ledger-chip">
