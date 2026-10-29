@@ -23,6 +23,7 @@ import formatCurrency from '../utils/formatting';
 import ConfirmDialog from '../components/ConfirmDialog';
 import EmptyState from '../components/EmptyState';
 import LoadingState from '../components/LoadingState';
+import PageSizeSelect, { readStoredPageSize, storePageSize } from '../components/PageSizeSelect';
 
 /** Monogram for the row avatar — first letters of the first two words. */
 function ledgerInitials(name: string): string {
@@ -70,7 +71,7 @@ export default function LedgersPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-  const pageSize = 20;
+  const [pageSize, setPageSize] = useState(() => readStoredPageSize('ledgers-page-size'));
 
   useEffect(() => {
     const state = location.state as { success?: string } | null;
@@ -80,12 +81,12 @@ export default function LedgersPage() {
     }
   }, [location.state]);
 
-  async function loadLedgers(currentPage: number, currentSearch: string) {
+  async function loadLedgers(currentPage: number, currentSearch: string, currentPageSize: number) {
     try {
       setLoading(true);
       setError('');
       const res = await api.get<PaginatedLedgers>('/ledgers/', {
-        params: { page: currentPage, page_size: pageSize, search: currentSearch },
+        params: { page: currentPage, page_size: currentPageSize, search: currentSearch },
       });
       setLedgers(res.data.items);
       setTotal(res.data.total);
@@ -98,8 +99,14 @@ export default function LedgersPage() {
   }
 
   useEffect(() => {
-    void loadLedgers(page, search);
-  }, [page, search]);
+    void loadLedgers(page, search, pageSize);
+  }, [page, search, pageSize]);
+
+  function handlePageSizeChange(nextPageSize: number) {
+    storePageSize('ledgers-page-size', nextPageSize);
+    setPageSize(nextPageSize);
+    setPage(1);
+  }
 
   // Currency is only needed to render balances; a failure here leaves the
   // default in place rather than blocking the registry.
@@ -396,7 +403,7 @@ export default function LedgersPage() {
               : null}
           </div>
 
-          {totalPages > 1 ? (
+          {total > 0 ? (
             <div className="ledger-pagination">
               <button
                 type="button"
@@ -423,6 +430,7 @@ export default function LedgersPage() {
                 Next
                 <ChevronRight size={15} />
               </button>
+              <PageSizeSelect id="ledgers-page-size" value={pageSize} onChange={handlePageSizeChange} />
             </div>
           ) : null}
         </article>
