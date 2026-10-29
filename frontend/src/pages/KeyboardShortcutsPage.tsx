@@ -160,7 +160,7 @@ export default function KeyboardShortcutsPage() {
               <th scope="col">Action</th>
               <th scope="col">Default Shortcut</th>
               <th scope="col">Your Shortcut</th>
-              <th scope="col" style={{ width: '160px' }} />
+              <th scope="col" style={{ width: '160px' }}><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody>
