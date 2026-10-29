@@ -3653,7 +3653,30 @@ a.invoice-row {
   display: inline-flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
   flex-shrink: 0;
+}
+
+/* Compact overdue pill. No minimum width, unlike .pill, so it fits in a
+   table cell and beside a due date. The clock icon and day count keep it
+   distinct from the Cancelled badge, which shares the danger colour. */
+.overdue-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 139, 139, 0.45);
+  color: #ffd9d9;
+  background: rgba(255, 139, 139, 0.22);
+  font-size: 0.74rem;
+  font-weight: 800;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.invoice-feed-table__due .overdue-badge {
+  margin-top: 4px;
 }
 
 .invoice-compact-card__cancelled-badge {

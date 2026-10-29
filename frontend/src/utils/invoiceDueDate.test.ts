@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { addDaysToIsoDate, createDueDateFormState, resolveDueDate } from './invoiceDueDate.ts';
+import { addDaysToIsoDate, createDueDateFormState, isOverdueInvoice, overdueLabel, resolveDueDate } from './invoiceDueDate.ts';
 
 describe('addDaysToIsoDate — calendar arithmetic on ISO dates', () => {
   test('same-day addition is a no-op', () => {
@@ -91,5 +91,60 @@ describe('createDueDateFormState — from a stored due date back to the form', (
       exactDate: '2024-03-15',
       daysFromInvoice: '',
     });
+  });
+});
+
+describe('overdueLabel — singular, plural, and not overdue', () => {
+  test('one day overdue is singular', () => {
+    expect(overdueLabel(-1)).toBe('1 day overdue');
+  });
+
+  test('several days overdue is plural', () => {
+    expect(overdueLabel(-5)).toBe('5 days overdue');
+  });
+
+  test('due today is not overdue', () => {
+    expect(overdueLabel(0)).toBe(null);
+  });
+
+  test('not yet due and no due date are not overdue', () => {
+    expect(overdueLabel(3)).toBe(null);
+    expect(overdueLabel(null)).toBe(null);
+    expect(overdueLabel(undefined)).toBe(null);
+  });
+});
+
+describe('isOverdueInvoice — dashboard definition of overdue', () => {
+  const base = {
+    status: 'active',
+    voucher_type: 'sales',
+    outstanding_amount: 100,
+    due_date: '2024-01-10',
+    due_in_days: -3,
+  };
+
+  test('active sales invoice with an outstanding amount past its due date', () => {
+    expect(isOverdueInvoice(base)).toBe(true);
+  });
+
+  test('partial payments still count while an amount is outstanding', () => {
+    expect(isOverdueInvoice({ ...base, outstanding_amount: 1 })).toBe(true);
+  });
+
+  test('paid invoices show no badge', () => {
+    expect(isOverdueInvoice({ ...base, outstanding_amount: 0 })).toBe(false);
+  });
+
+  test('cancelled invoices show no badge even when due_in_days is negative', () => {
+    expect(isOverdueInvoice({ ...base, status: 'cancelled' })).toBe(false);
+  });
+
+  test('purchase invoices show no badge, matching the dashboard', () => {
+    expect(isOverdueInvoice({ ...base, voucher_type: 'purchase' })).toBe(false);
+  });
+
+  test('due today and no due date show no badge', () => {
+    expect(isOverdueInvoice({ ...base, due_in_days: 0 })).toBe(false);
+    expect(isOverdueInvoice({ ...base, due_date: null, due_in_days: null })).toBe(false);
   });
 });
