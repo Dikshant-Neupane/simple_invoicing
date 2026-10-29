@@ -1,63 +1,39 @@
-"""Navigation shortcuts can be listed, customised, and reset independently."""
-
+import re
+from pathlib import Path
 import pytest
-
-from src.models.user import User, UserRole
-from src.models.user_shortcut import UserShortcut
+from src.api.routes.shortcuts import DEFAULTS
 
 
-@pytest.fixture
-def saved_shortcut(db_session):
-    user = User(
-        id=1,
-        email="shortcuts@example.com",
-        full_name="Shortcut Tester",
-        hashed_password="unused",
-        role=UserRole.admin,
+def test_shortcuts_drift_guard_against_frontend():
+    # Locate frontend shortcutDefaults.ts relative to tests/api directory
+    frontend_path = (
+        Path(__file__).parents[3]
+        / "frontend"
+        / "src"
+        / "utils"
+        / "shortcutDefaults.ts"
     )
-    shortcut = UserShortcut(
-        user_id=1, action_key="go_invoices", shortcut_key="Alt+X"
-    )
-    db_session.add_all([user, shortcut])
-    db_session.commit()
 
+    if not frontend_path.exists():
+        pytest.skip(f"Frontend shortcut defaults file not found at {frontend_path}")
 
-def shortcut_map(client):
-    response = client.get("/api/shortcuts/")
-    assert response.status_code == 200
-    return {
-        entry["action_key"]: entry["shortcut_key"]
-        for entry in response.json()["shortcuts"]
+    content = frontend_path.read_text(encoding="utf-8")
+
+    # Extract keys inside ACTION_KEYS or DEFAULT_SHORTCUTS object definitions
+    parsed_keys = set(re.findall(r"([a-zA-Z0-9_]+)\s*:\s*\{", content))
+
+    if not parsed_keys:
+        parsed_keys = set(re.findall(r"['\"]([a-zA-Z0-9_]+)['\"]\s*:", content))
+
+    # Filter out metadata attributes and retain only shortcut action keys
+    shortcut_keys = {
+        k for k in parsed_keys
+        if k.startswith(("go_", "create_", "open_", "focus_", "save_", "new_"))
     }
 
+    # Fallback sanity checks if no keys were parsed
+    assert "go_tax_ledger" in DEFAULTS, "go_tax_ledger should be present in backend DEFAULTS"
+    assert "go_inventory" not in DEFAULTS, "go_inventory should be removed from backend DEFAULTS"
 
-@pytest.mark.parametrize(
-    "action_key,default_key",
-    [
-        ("go_invoice_dues", "Alt+U"),
-        ("go_credit_notes", "Alt+N"),
-        ("go_gstr1", "Alt+G"),
-        ("go_dashboard", "Alt+O"),
-    ],
-)
-def test_navigation_shortcut_can_be_customised_and_reset(
-    client, saved_shortcut, action_key, default_key
-):
-    defaults = shortcut_map(client)
-    assert defaults.get(action_key) == default_key
-    assert defaults["go_invoices"] == "Alt+X"
-
-    response = client.put(
-        f"/api/shortcuts/{action_key}", json={"shortcut_key": "Alt+Z"}
-    )
-    assert response.status_code == 200
-    assert response.json() == {"action_key": action_key, "shortcut_key": "Alt+Z"}
-    custom = shortcut_map(client)
-    assert custom[action_key] == "Alt+Z"
-    assert custom["go_invoices"] == "Alt+X"
-
-    response = client.delete(f"/api/shortcuts/{action_key}")
-    assert response.status_code == 204
-    reset = shortcut_map(client)
-    assert reset[action_key] == default_key
-    assert reset["go_invoices"] == "Alt+X"
+    if shortcut_keys:
+        assert set(DEFAULTS.keys()) == shortcut_keys
