@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 
 from src.core.validation import normalize_hsn_sac
@@ -10,16 +10,16 @@ class ProductCreate(BaseModel):
     name: str
     description: Optional[str] = None
     hsn_sac: Optional[str] = None
-    price: float
-    purchase_price: float = 0
+    price: float = Field(ge=0)
+    purchase_price: float = Field(default=0, ge=0)
     gst_rate: float = 0
     unit: str = "Pieces"
     allow_decimal: bool = False
     maintain_inventory: bool = True
     is_producable: bool = False
-    production_cost: Optional[float] = None
-    reorder_level: float = 0
-    initial_quantity: float = 0
+    production_cost: Optional[float] = Field(default=None, ge=0)
+    reorder_level: float = Field(default=0, ge=0)
+    initial_quantity: float = Field(default=0, ge=0)
     track_serials: bool = False
     # Opening serials on create, backfill on enable — one field, one round-trip,
     # so the flag and the units behind it can never be saved apart.
@@ -36,6 +36,14 @@ class ProductCreate(BaseModel):
         normalized = value.strip()
         if not normalized:
             raise ValueError("Unit is required")
+        return normalized
+
+    @field_validator("sku", "name")
+    @classmethod
+    def validate_sku_and_name_not_blank(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("Value must not be blank")
         return normalized
 
 
@@ -91,10 +99,13 @@ class ProductWithInventoryUpdate(BaseModel):
     description: Optional[str] = None
     hsn_sac: Optional[str] = None
     category: Optional[str] = None
-    purchase_price: Optional[float] = None
-    selling_price: Optional[float] = None
+    purchase_price: Optional[float] = Field(default=None, ge=0)
+    selling_price: Optional[float] = Field(default=None, ge=0)
+    # Deliberately unbounded: the with inventory update sets stock
+    # outright, and this issue does not settle whether a negative
+    # stock value is ever legitimate there.
     current_stock: Optional[float] = None
-    reorder_level: Optional[float] = None
+    reorder_level: Optional[float] = Field(default=None, ge=0)
     status: Optional[str] = None
     unit: Optional[str] = None
     gst_rate: Optional[float] = None
@@ -103,6 +114,16 @@ class ProductWithInventoryUpdate(BaseModel):
     @classmethod
     def validate_hsn_sac(cls, value: str | None) -> str | None:
         return normalize_hsn_sac(value)
+
+    @field_validator("name", "sku")
+    @classmethod
+    def validate_name_and_sku_not_blank(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("Value must not be blank")
+        return normalized
 
 
 class ImportCSVResult(BaseModel):
