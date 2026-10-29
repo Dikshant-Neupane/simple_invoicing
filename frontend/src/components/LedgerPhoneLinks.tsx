@@ -22,18 +22,22 @@ export default function LedgerPhoneLinks({ phone }: LedgerPhoneLinksProps) {
       ) : (
         <span>{displayPhone}</span>
       )}
-      {' · '}
-      <a
-        className="ledger-contact-link ledger-contact-link--whatsapp"
-        href={buildWhatsAppUrl(whatsappNumber, '')}
-        target="_blank"
-        rel="noopener noreferrer"
-        title={whatsappNumber ? `WhatsApp ${displayPhone}` : 'Choose a contact in WhatsApp'}
-        aria-label={whatsappNumber ? `WhatsApp ${displayPhone}` : 'Choose a contact in WhatsApp'}
-      >
-        <MessageCircle size={14} aria-hidden="true" />
-        WhatsApp
-      </a>
+      {whatsappNumber ? (
+        <>
+          {' · '}
+          <a
+            className="ledger-contact-link ledger-contact-link--whatsapp"
+            href={buildWhatsAppUrl(whatsappNumber, '')}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={`WhatsApp ${displayPhone}`}
+            aria-label={`WhatsApp ${displayPhone}`}
+          >
+            <MessageCircle size={14} aria-hidden="true" />
+            WhatsApp
+          </a>
+        </>
+      ) : null}
     </>
   );
 }

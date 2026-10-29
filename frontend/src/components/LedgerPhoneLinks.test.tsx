@@ -25,11 +25,11 @@ describe('LedgerPhoneLinks', () => {
     expect(renderToStaticMarkup(<LedgerPhoneLinks phone={phone} />)).toBe('');
   });
 
-  test('does not guess a WhatsApp recipient for uncertain input', () => {
+  test('hides the WhatsApp link for uncertain input', () => {
     const html = renderToStaticMarkup(<LedgerPhoneLinks phone="12345" />);
 
     expect(html).toContain('href="tel:12345"');
-    expect(html).toContain('href="https://wa.me/"');
-    expect(html).toContain('Choose a contact in WhatsApp');
+    expect(html).not.toContain('WhatsApp');
+    expect(html).not.toContain('https://wa.me/');
   });
 });
