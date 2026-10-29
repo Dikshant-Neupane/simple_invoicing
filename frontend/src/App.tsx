@@ -42,6 +42,7 @@ import SettingsLayout from './pages/settings/SettingsLayout';
 import SettingsOverviewPage from './pages/settings/SettingsOverviewPage';
 import { LEGACY_REDIRECTS } from './config/navigation';
 import Layout from './components/Layout';
+import { ShortcutCheatSheetHost } from './components/ShortcutCheatSheetHost';
 
 // Lazily loaded: these are the only routes that pull in recharts (~100kb gz),
 // and every other route here is imported eagerly — they shouldn't pay for it.
@@ -185,6 +186,8 @@ function LegacyRedirect({ to }: { to: string }) {
 
 function AppRoutes() {
   return (
+    <>
+    <ShortcutCheatSheetHost />
     <Routes>
       <Route
         path="/login"
@@ -249,6 +252,7 @@ function AppRoutes() {
 
       <Route path="*" element={<Protected><CompanyRequired><Layout><NotFoundPage /></Layout></CompanyRequired></Protected>} />
     </Routes>
+    </>
   );
 }
 
