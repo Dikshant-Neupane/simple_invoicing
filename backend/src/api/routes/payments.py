@@ -284,6 +284,26 @@ def update_payment(
         exclude_payment_id=payment.id,
     )
 
+    # A missing invoice_allocations field means "leave the existing rows
+    # alone", not "remove them all": PaymentUpdate defaults it to None, while
+    # an explicitly sent empty list still clears them, as before. Kept rows
+    # must still be consistent with the edit, so validate them before
+    # mutating anything: a voucher type change would point them at the wrong
+    # kind of invoice, and a smaller amount must still cover their total.
+    kept_allocations = list(payment.invoice_allocations or [])
+    if payload.invoice_allocations is None and kept_allocations:
+        if payload.voucher_type != payment.voucher_type:
+            raise HTTPException(
+                status_code=400,
+                detail="Changing the voucher type would invalidate the existing invoice allocations",
+            )
+        kept_total = sum(float(allocation.allocated_amount or 0) for allocation in kept_allocations)
+        if kept_total > float(payload.amount or 0):
+            raise HTTPException(
+                status_code=400,
+                detail="Allocated total cannot exceed the receipt/payment amount",
+            )
+
     selected_account = None
     if payload.account_id is not None:
         selected_account = _get_active_account(db, payload.account_id, company_id)
@@ -296,13 +316,14 @@ def update_payment(
     payment.mode = payload.mode.strip() if payload.mode else None
     payment.reference = payload.reference.strip() if payload.reference else None
     payment.notes = payload.notes.strip() if payload.notes else None
-    sync_payment_allocations(
-      db,
-      payment=payment,
-      invoice_allocations=payload.invoice_allocations,
-      exclude_payment_id=payment.id,
-      company_id=company_id,
-    )
+    if payload.invoice_allocations is not None:
+        sync_payment_allocations(
+          db,
+          payment=payment,
+          invoice_allocations=payload.invoice_allocations,
+          exclude_payment_id=payment.id,
+          company_id=company_id,
+        )
     db.commit()
     db.refresh(payment)
     result = _to_payment_out(payment)

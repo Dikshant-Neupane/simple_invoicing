@@ -279,3 +279,107 @@ def test_receipt_html_hides_invoice_allocations_section_when_absent():
     html = _build_receipt_html(payment, company, {})
 
     assert "Allocated Invoices" not in html
+
+def _update_payment_db(existing_payment):
+    db = MagicMock()
+    db.query.return_value.options.return_value.filter.return_value.first.return_value = existing_payment
+    return db
+
+
+def _allocated_payment(amount=200):
+    return SimpleNamespace(
+        id=12,
+        ledger_id=11,
+        voucher_type="receipt",
+        amount=amount,
+        account_id=None,
+        date=datetime(2032, 4, 2, 10, 0),
+        mode="upi",
+        reference="REF-42",
+        notes=None,
+        status="active",
+        invoice_allocations=[
+            SimpleNamespace(invoice_id=21, allocated_amount=60),
+            SimpleNamespace(invoice_id=22, allocated_amount=40),
+        ],
+    )
+
+
+def _run_update(existing_payment, payload):
+    db = _update_payment_db(existing_payment)
+    with patch("src.api.routes.payments.sync_payment_allocations") as sync_mock, patch(
+        "src.api.routes.payments._to_payment_out", return_value=SimpleNamespace(ok=True)
+    ):
+        result = update_payment(12, payload, db=db, _=SimpleNamespace(id=1))
+    return db, sync_mock, result
+
+
+def test_update_payment_without_allocations_keeps_existing_allocations():
+    existing_payment = _allocated_payment()
+    payload = PaymentUpdate(
+        voucher_type="receipt",
+        amount=200,
+        date=datetime(2032, 4, 3, 11, 0),
+    )
+    assert payload.invoice_allocations is None
+
+    _, sync_mock, _ = _run_update(existing_payment, payload)
+
+    sync_mock.assert_not_called()
+    assert existing_payment.invoice_allocations[0].allocated_amount == 60
+    assert existing_payment.invoice_allocations[1].allocated_amount == 40
+    assert existing_payment.amount == 200
+
+
+def test_update_payment_without_allocations_keeps_allocations_when_amount_still_covers_them():
+    existing_payment = _allocated_payment()
+    payload = PaymentUpdate(voucher_type="receipt", amount=150)
+
+    _, sync_mock, _ = _run_update(existing_payment, payload)
+
+    sync_mock.assert_not_called()
+    assert existing_payment.amount == 150
+
+
+def test_update_payment_with_empty_allocations_still_clears_them():
+    existing_payment = _allocated_payment()
+    payload = PaymentUpdate(voucher_type="receipt", amount=200, invoice_allocations=[])
+
+    _, sync_mock, _ = _run_update(existing_payment, payload)
+
+    sync_mock.assert_called_once()
+    assert sync_mock.call_args.kwargs["invoice_allocations"] == []
+
+
+def test_update_payment_without_allocations_rejects_amount_below_allocated_total():
+    existing_payment = _allocated_payment()
+    payload = PaymentUpdate(voucher_type="receipt", amount=90)
+
+    db = _update_payment_db(existing_payment)
+    with patch("src.api.routes.payments.sync_payment_allocations") as sync_mock:
+        try:
+            update_payment(12, payload, db=db, _=SimpleNamespace(id=1))
+            assert False, "Expected HTTPException for amount below allocated total"
+        except HTTPException as exc:
+            assert exc.status_code == 400
+            assert "Allocated total" in exc.detail
+
+    sync_mock.assert_not_called()
+    assert existing_payment.amount == 200
+
+
+def test_update_payment_without_allocations_rejects_voucher_type_change():
+    existing_payment = _allocated_payment()
+    payload = PaymentUpdate(voucher_type="payment", amount=200)
+
+    db = _update_payment_db(existing_payment)
+    with patch("src.api.routes.payments.sync_payment_allocations") as sync_mock:
+        try:
+            update_payment(12, payload, db=db, _=SimpleNamespace(id=1))
+            assert False, "Expected HTTPException for voucher type change with allocations"
+        except HTTPException as exc:
+            assert exc.status_code == 400
+            assert "invoice allocations" in exc.detail
+
+    sync_mock.assert_not_called()
+    assert existing_payment.voucher_type == "receipt"
