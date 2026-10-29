@@ -1222,6 +1222,7 @@ export default function InvoicesPage() {
                     type="number"
                     step="0.01"
                     min="0"
+                    max={invoiceDiscountType === 'percentage' ? '100' : undefined}
                     value={invoiceDiscountValue}
                     onChange={(e) => setInvoiceDiscountValue(e.target.value)}
                     placeholder={invoiceDiscountType === 'percentage' ? 'e.g. 5%' : 'e.g. 100.00'}
@@ -1438,6 +1439,7 @@ export default function InvoicesPage() {
                           type="number"
                           step="0.01"
                           min="0"
+                          max={item.discount_type === 'percentage' ? '100' : undefined}
                           value={item.discount_value}
                           onChange={(event) => updateItem(item.id, 'discount_value', event.target.value)}
                           placeholder="0"

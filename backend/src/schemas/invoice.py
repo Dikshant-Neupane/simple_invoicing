@@ -1,17 +1,46 @@
 from datetime import date, datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
 from typing import List, Literal, Optional
 from src.schemas.ledger import LedgerOut
 from src.schemas.ledger_address import ShippingAddressInline
 
 
+def _validate_discount_value(
+    value: float | None, info: ValidationInfo
+) -> float | None:
+    """Reject negative discounts, and percentage discounts over 100.
+
+    The sibling ``discount_type`` field is declared before ``discount_value``
+    in both models below, so it is already present in ``info.data``.
+    A net discount has no percentage cap: the processor clamps it to the
+    line or invoice total, so a large flat discount stays valid.
+    """
+    if value is None:
+        return value
+    if value < 0:
+        raise ValueError("discount_value must be greater than or equal to 0")
+    if info.data.get("discount_type") == "percentage" and value > 100:
+        raise ValueError(
+            "discount_value must be less than or equal to 100 "
+            "when discount_type is percentage"
+        )
+    return value
+
+
 class InvoiceItemCreate(BaseModel):
     product_id: int
     quantity: float
-    unit_price: float | None = None
+    unit_price: float | None = Field(default=None, ge=0)
     description: str | None = None
     discount_type: Literal["percentage", "net"] | None = None
     discount_value: float | None = None
+
+    @field_validator("discount_value", mode="after")
+    @classmethod
+    def _check_discount_value(
+        cls, value: float | None, info: ValidationInfo
+    ) -> float | None:
+        return _validate_discount_value(value, info)
     # Per-line overrides of the product master. Marketplace purchases must book the
     # SELLER's rate and HSN — if the buyer's local product carries a different rate,
     # the two legally-linked invoices would disagree on tax. None = use the product.
@@ -37,6 +66,13 @@ class InvoiceCreate(BaseModel):
     shipping_address_id: int | None = None
     new_shipping_address: ShippingAddressInline | None = None
     items: List[InvoiceItemCreate]
+
+    @field_validator("discount_value", mode="after")
+    @classmethod
+    def _check_discount_value(
+        cls, value: float | None, info: ValidationInfo
+    ) -> float | None:
+        return _validate_discount_value(value, info)
 
 
 class InvoiceItemOut(BaseModel):
