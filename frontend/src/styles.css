@@ -1792,6 +1792,32 @@ textarea {
   transform: translateY(calc(-50% - 1px));
 }
 
+/* Shared password field toggle (PasswordInput). The button sits inside the
+   input's right padding, so the input keeps its full width and the surrounding
+   layout does not move, including at mobile widths. */
+.password-input-wrap {
+  position: relative;
+}
+
+.password-input-wrap .input {
+  padding-right: 44px;
+}
+
+.password-input-wrap__toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  padding: 6px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
 .change-password-strength {
   margin-top: 6px;
   display: grid;
