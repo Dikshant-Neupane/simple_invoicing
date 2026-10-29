@@ -9,6 +9,7 @@ import ScopeBar, { Metric } from '../components/ScopeBar';
 import InvoicePreview from '../components/InvoicePreview';
 import ConfirmDialog from '../components/ConfirmDialog';
 import formatCurrency from '../utils/formatting';
+import { downloadCsv } from '../utils/csv';
 import { formatInvoiceDateLabel } from '../utils/invoiceDueDate.ts';
 import EmptyState from '../components/EmptyState';
 import LoadingState from '../components/LoadingState';
@@ -158,6 +159,21 @@ export default function InvoiceDuesPage() {
   }
 
   const outstandingTotal = items.reduce((sum, invoice) => sum + invoice.outstanding_amount, 0);
+
+  function handleExportCsv() {
+    downloadCsv(
+      `invoice_dues_${new Date().toISOString().slice(0, 10)}.csv`,
+      ['Customer', 'Invoice number', 'Invoice date', 'Due date', 'Total', 'Amount due'],
+      items.map((invoice) => [
+        invoice.ledger_name ?? '',
+        invoice.invoice_number ?? `#${invoice.id}`,
+        invoice.invoice_date,
+        invoice.due_date ?? '',
+        invoice.total_amount,
+        invoice.outstanding_amount,
+      ]),
+    );
+  }
 
   const handleSendReminders = useCallback(async () => {
     setShowRemindersConfirm(false);
@@ -344,6 +360,14 @@ export default function InvoiceDuesPage() {
             </div>
             <div className="button-row">
               <div className="status-chip">Page {page} of {Math.max(totalPages, 1)}</div>
+              <button
+                type="button"
+                className="button button--secondary button--small"
+                disabled={loading || items.length === 0}
+                onClick={handleExportCsv}
+              >
+                Export CSV
+              </button>
               <button
                 type="button"
                 className="button button--primary button--small"
