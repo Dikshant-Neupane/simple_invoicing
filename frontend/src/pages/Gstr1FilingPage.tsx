@@ -325,7 +325,14 @@ export default function Gstr1FilingPage() {
                   <tbody>
                     {validation.errors.map((err, i) => (
                       <tr key={i}>
-                        <td className="text-xs">{err.invoice_number}</td>
+                        <td className="text-xs">
+                          <Link
+                            className="button button--ghost button--small"
+                            to={`/invoices-view?search=${encodeURIComponent(err.invoice_number)}`}
+                          >
+                            {err.invoice_number}
+                          </Link>
+                        </td>
                         <td className="text-xs">{err.field}</td>
                         <td className="text-xs">{err.message}</td>
                         <td>
