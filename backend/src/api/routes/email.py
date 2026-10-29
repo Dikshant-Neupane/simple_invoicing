@@ -395,17 +395,20 @@ async def send_payment_reminder_email(
     if company_id is not None:
         sales_invoices_query = sales_invoices_query.filter(or_(Invoice.company_id == company_id, Invoice.company_id.is_(None)))
     sales_invoices = sales_invoices_query.order_by(Invoice.invoice_date.asc(), Invoice.id.asc()).all()
+    # Rows use allocated payments as well as credit notes, so they can add up to
+    # more than outstanding_balance when the ledger has unallocated receipts.
+    payment_summaries = build_invoice_payment_summaries(db, sales_invoices)
     unpaid_invoices = []
     for inv in sales_invoices:
-        net_amount = float(inv.total_amount) - credit_note_summary.sales_credit_by_invoice.get(inv.id, 0.0)
-        if net_amount <= 0:
+        summary = payment_summaries.get(inv.id)
+        if summary is None or summary.remaining_amount <= 0:
             continue
         unpaid_invoices.append(
             {
                 "invoice_number": inv.invoice_number or f"#{inv.id}",
                 "invoice_date": inv.invoice_date.strftime("%d %b %Y") if inv.invoice_date else "N/A",
                 "due_date": inv.due_date.strftime("%d %b %Y") if inv.due_date else None,
-                "amount": _fmt(net_amount),
+                "amount": _fmt(summary.remaining_amount),
             }
         )
 
