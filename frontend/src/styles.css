@@ -3226,6 +3226,12 @@ a.invoice-row {
   border: 1px solid #d9e2f2;
 }
 
+.table-scroll {
+  /* Contain absolutely positioned screen-reader labels as well as the table. */
+  position: relative;
+  overflow-x: auto;
+}
+
 /* Generic settings-page tables. Both class names were used in markup but
    defined nowhere, so their cells had no padding and collided. */
 .table,

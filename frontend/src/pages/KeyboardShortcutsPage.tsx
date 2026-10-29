@@ -154,103 +154,105 @@ export default function KeyboardShortcutsPage() {
       </section>
 
       <section className="section-card">
-        <table className="table" style={{ width: '100%' }}>
-          <thead>
-            <tr>
-              <th scope="col">Action</th>
-              <th scope="col">Default Shortcut</th>
-              <th scope="col">Your Shortcut</th>
-              <th scope="col" style={{ width: '160px' }}><span className="sr-only">Actions</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            {ACTION_KEYS.map((key) => {
-              const isRecording = recording === key;
-              const pendingValue = pending[key];
-              const displayValue = pendingValue ?? shortcutsMap[key];
-              const conflict = pendingValue !== undefined ? getConflict(key, pendingValue) : null;
-              const hasChange = pendingValue !== undefined;
-              const isSaving = savingKey === key;
-              const isResetting = resettingKey === key;
+        <div className="table-scroll">
+          <table className="table" style={{ width: '100%' }}>
+            <thead>
+              <tr>
+                <th scope="col">Action</th>
+                <th scope="col">Default Shortcut</th>
+                <th scope="col">Your Shortcut</th>
+                <th scope="col" style={{ width: '160px' }}><span className="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {ACTION_KEYS.map((key) => {
+                const isRecording = recording === key;
+                const pendingValue = pending[key];
+                const displayValue = pendingValue ?? shortcutsMap[key];
+                const conflict = pendingValue !== undefined ? getConflict(key, pendingValue) : null;
+                const hasChange = pendingValue !== undefined;
+                const isSaving = savingKey === key;
+                const isResetting = resettingKey === key;
 
-              return (
-                <tr key={key}>
-                  <td>{ACTION_LABELS[key]}</td>
-                  <td>
-                    <kbd>{DEFAULT_SHORTCUTS[key]}</kbd>
-                  </td>
-                  <td>
-                    <button
-                      type="button"
-                      className="input"
-                      style={{
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        fontFamily: 'monospace',
-                        width: '100%',
-                        maxWidth: '200px',
-                        background: isRecording
-                          ? 'var(--color-focus-ring)'
-                          : conflict !== null
-                            ? 'var(--color-error-bg)'
-                            : undefined,
-                      }}
-                      onClick={() => setRecording(isRecording ? null : key)}
-                      title={
-                        isRecording
-                          ? 'Press a key combination, or Escape to cancel'
-                          : 'Click to record a new shortcut'
-                      }
-                      aria-label={
-                        isRecording
-                          ? 'Recording shortcut — press a key combination'
-                          : `Current shortcut: ${displayValue}`
-                      }
-                    >
-                      {isRecording ? 'Press keys…' : displayValue}
-                    </button>
-                    {conflict !== null && (
-                      <p
-                        role="alert"
-                        style={{
-                          color: 'var(--color-error)',
-                          fontSize: '0.75rem',
-                          marginTop: '4px',
-                        }}
-                      >
-                        Already used by: {ACTION_LABELS[conflict]}
-                      </p>
-                    )}
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      {hasChange && conflict === null && (
-                        <button
-                          type="button"
-                          className="button button--primary"
-                          onClick={() => void handleSave(key)}
-                          disabled={isSaving}
-                          style={{ padding: '4px 12px', fontSize: '0.8125rem' }}
-                        >
-                          {isSaving ? 'Saving…' : 'Save'}
-                        </button>
-                      )}
+                return (
+                  <tr key={key}>
+                    <td>{ACTION_LABELS[key]}</td>
+                    <td>
+                      <kbd>{DEFAULT_SHORTCUTS[key]}</kbd>
+                    </td>
+                    <td>
                       <button
                         type="button"
-                        className="button button--secondary"
-                        onClick={() => void handleReset(key)}
-                        disabled={isResetting || resettingAll}
-                        style={{ padding: '4px 12px', fontSize: '0.8125rem' }}
+                        className="input"
+                        style={{
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          fontFamily: 'monospace',
+                          width: '100%',
+                          maxWidth: '200px',
+                          background: isRecording
+                            ? 'var(--color-focus-ring)'
+                            : conflict !== null
+                              ? 'var(--color-error-bg)'
+                              : undefined,
+                        }}
+                        onClick={() => setRecording(isRecording ? null : key)}
+                        title={
+                          isRecording
+                            ? 'Press a key combination, or Escape to cancel'
+                            : 'Click to record a new shortcut'
+                        }
+                        aria-label={
+                          isRecording
+                            ? 'Recording shortcut — press a key combination'
+                            : `Current shortcut: ${displayValue}`
+                        }
                       >
-                        {isResetting ? 'Resetting…' : 'Reset'}
+                        {isRecording ? 'Press keys…' : displayValue}
                       </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                      {conflict !== null && (
+                        <p
+                          role="alert"
+                          style={{
+                            color: 'var(--color-error)',
+                            fontSize: '0.75rem',
+                            marginTop: '4px',
+                          }}
+                        >
+                          Already used by: {ACTION_LABELS[conflict]}
+                        </p>
+                      )}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        {hasChange && conflict === null && (
+                          <button
+                            type="button"
+                            className="button button--primary"
+                            onClick={() => void handleSave(key)}
+                            disabled={isSaving}
+                            style={{ padding: '4px 12px', fontSize: '0.8125rem' }}
+                          >
+                            {isSaving ? 'Saving…' : 'Save'}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="button button--secondary"
+                          onClick={() => void handleReset(key)}
+                          disabled={isResetting || resettingAll}
+                          style={{ padding: '4px 12px', fontSize: '0.8125rem' }}
+                        >
+                          {isResetting ? 'Resetting…' : 'Reset'}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   );

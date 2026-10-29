@@ -285,49 +285,51 @@ export default function ApiKeysPage() {
         </div>
       ) : (
         <div className="panel">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th scope="col">Name</th>
-                <th scope="col">Key prefix</th>
-                <th scope="col">Expires</th>
-                <th scope="col">Status</th>
-                <th scope="col" style={{ width: '48px' }}><span className="sr-only">Actions</span></th>
-              </tr>
-            </thead>
-            <tbody>
-              {keys.map((k) => {
-                const expired = new Date(k.expires_at) < now;
-                return (
-                  <tr key={k.id}>
-                    <td>{k.name}</td>
-                    <td>
-                      <code style={{ fontFamily: 'monospace', fontSize: '0.82rem' }}>
-                        {k.key_prefix}…
-                      </code>
-                    </td>
-                    <td style={{ color: expired ? 'var(--color-danger)' : undefined }}>
-                      {formatExpiry(k.expires_at)}
-                    </td>
-                    <td>
-                      <span className={`status-chip ${expired ? 'status-chip--error' : 'status-chip--success'}`}>
-                        {expired ? 'Expired' : 'Active'}
-                      </span>
-                    </td>
-                    <td>
-                      <button
-                        className="button button--ghost button--icon"
-                        title="Delete key"
-                        onClick={() => setDeleteTarget(k)}
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="table-scroll">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col">Key prefix</th>
+                  <th scope="col">Expires</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" style={{ width: '48px' }}><span className="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {keys.map((k) => {
+                  const expired = new Date(k.expires_at) < now;
+                  return (
+                    <tr key={k.id}>
+                      <td>{k.name}</td>
+                      <td>
+                        <code style={{ fontFamily: 'monospace', fontSize: '0.82rem' }}>
+                          {k.key_prefix}…
+                        </code>
+                      </td>
+                      <td style={{ color: expired ? 'var(--color-danger)' : undefined }}>
+                        {formatExpiry(k.expires_at)}
+                      </td>
+                      <td>
+                        <span className={`status-chip ${expired ? 'status-chip--error' : 'status-chip--success'}`}>
+                          {expired ? 'Expired' : 'Active'}
+                        </span>
+                      </td>
+                      <td>
+                        <button
+                          className="button button--ghost button--icon"
+                          title="Delete key"
+                          onClick={() => setDeleteTarget(k)}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
