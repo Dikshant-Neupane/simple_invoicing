@@ -63,6 +63,7 @@ invoices_export_csv	GET	/api/invoices/export
 invoices_get	GET	/api/invoices/{invoice_id}
 invoices_list	GET	/api/invoices/
 invoices_list_dues	GET	/api/invoices/dues
+invoices_list_dues_ageing	GET	/api/invoices/dues/ageing
 invoices_restore	POST	/api/invoices/{invoice_id}/restore
 invoices_update	PUT	/api/invoices/{invoice_id}
 ledgers_create	POST	/api/ledgers/
