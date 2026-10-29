@@ -23,6 +23,7 @@ import type {
   Product,
 } from '../types/api';
 import formatCurrency, { formatDate } from '../utils/formatting';
+import { downloadCsv } from '../utils/csv';
 import { deepLinkClass, numericParam, useDeepLinkScroll } from '../utils/deepLink';
 
 type SelectedLineItem = {
@@ -514,6 +515,23 @@ export default function CreditNotesPage() {
     }
   }
 
+  function handleExportCreditNotesCsv() {
+    downloadCsv(
+      `credit_notes_${new Date().toISOString().slice(0, 10)}.csv`,
+      ['Number', 'Date', 'Ledger', 'Original invoice', 'Total'],
+      creditNotes.map((creditNote) => {
+        const ledger = ledgers.find((entry) => entry.id === creditNote.ledger_id);
+        return [
+          creditNote.credit_note_number,
+          formatDate(creditNote.created_at),
+          ledger?.name || `Ledger #${creditNote.ledger_id}`,
+          creditNote.invoice_ids.join(', '),
+          creditNote.total_amount,
+        ];
+      }),
+    );
+  }
+
   return (
     <>
       <StatusToasts
@@ -822,9 +840,19 @@ export default function CreditNotesPage() {
               <p className="eyebrow">Registry</p>
               <h2 className="nav-panel__title">Credit note feed</h2>
             </div>
-            <div style={{ textAlign: 'right' }}>
-              <p className="eyebrow">Listed total</p>
-              <strong style={{ fontSize: '1.1rem' }}>{listTotal}</strong>
+            <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+              <div>
+                <p className="eyebrow">Listed total</p>
+                <strong style={{ fontSize: '1.1rem' }}>{listTotal}</strong>
+              </div>
+              <button
+                type="button"
+                className="button button--secondary button--small"
+                disabled={loadingCreditNotes || creditNotes.length === 0}
+                onClick={handleExportCreditNotesCsv}
+              >
+                Export CSV
+              </button>
             </div>
           </div>
 
