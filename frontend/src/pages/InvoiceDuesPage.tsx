@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { MessageCircle } from 'lucide-react';
 import { fetchCompanyProfile, fetchDueInvoicePage, fetchInvoiceById, fetchLedgers, type DueInvoiceFilters } from '../features/invoices/api';
 import type { CompanyProfile, Invoice, Ledger } from '../types/api';
 import { sendDueReminders, type DueRemindersResponse } from '../api/emailLogs';
@@ -9,6 +10,8 @@ import ScopeBar, { Metric } from '../components/ScopeBar';
 import InvoicePreview from '../components/InvoicePreview';
 import ConfirmDialog from '../components/ConfirmDialog';
 import formatCurrency from '../utils/formatting';
+import { buildWhatsAppUrl, toWhatsAppNumber } from '../utils/phone';
+import { buildWhatsAppReminderMessage } from '../utils/whatsappReminder';
 import { downloadCsv } from '../utils/csv';
 import { formatInvoiceDateLabel, isOverdueInvoice, overdueLabel } from '../utils/invoiceDueDate.ts';
 import OverdueBadge from '../components/OverdueBadge';
@@ -395,7 +398,22 @@ export default function InvoiceDuesPage() {
               <EmptyState message="No invoices match your due filters. Try adjusting the due window or search." />
             ) : null}
             {!loading
-              ? items.map((invoice) => (
+              ? items.map((invoice) => {
+                  const whatsappNumber = toWhatsAppNumber(invoice.ledger_phone);
+                  const whatsappUrl = whatsappNumber
+                    ? buildWhatsAppUrl(
+                        whatsappNumber,
+                        buildWhatsAppReminderMessage({
+                          customerName: invoice.ledger_name,
+                          invoiceNumber: invoice.invoice_number || `#${invoice.id}`,
+                          outstandingAmount: invoice.outstanding_amount,
+                          currencyCode,
+                          dueDate: invoice.due_date,
+                          overdue: isOverdueInvoice(invoice),
+                        }),
+                      )
+                    : null;
+                  return (
                   <div key={invoice.id} className="invoice-row">
                     <div className="invoice-row__meta">
                       <strong>{invoice.invoice_number || `#${invoice.id}`}</strong>
@@ -441,9 +459,22 @@ export default function InvoiceDuesPage() {
                       >
                         View
                       </button>
+                      {whatsappUrl ? (
+                        <a
+                          className="button button--ghost button--small"
+                          href={whatsappUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={`WhatsApp reminder to ${invoice.ledger_name || 'customer'}`}
+                          aria-label={`WhatsApp reminder to ${invoice.ledger_name || 'customer'}`}
+                        >
+                          <MessageCircle size={16} aria-hidden="true" />
+                        </a>
+                      ) : null}
                     </div>
                   </div>
-                ))
+                  );
+                })
               : null}
           </div>
 
