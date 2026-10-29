@@ -313,6 +313,7 @@ export default function Gstr1FilingPage() {
             {validation.errors.length > 0 ? (
               <div className="table-wrap" style={{ maxHeight: 480, overflow: 'auto' }}>
                 <table className="invoice-feed-table">
+                  <caption className="sr-only">GSTR-1 validation errors</caption>
                   <thead>
                     <tr>
                       <th scope="col">Invoice #</th>
@@ -460,6 +461,7 @@ function Gstr1SummaryView({
 
           <div className="table-wrap" style={{ maxHeight: 420, overflow: 'auto' }}>
             <table className="invoice-feed-table">
+              <caption className="sr-only">HSN/SAC-wise summary</caption>
               <thead>
                 <tr>
                   <th scope="col">HSN/SAC</th>

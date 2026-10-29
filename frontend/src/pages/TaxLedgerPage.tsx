@@ -196,6 +196,7 @@ export default function TaxLedgerPage() {
             className="table-wrap tax-ledger-scroll"
           >
             <table className="invoice-feed-table tax-ledger-table">
+              <caption className="sr-only">Tax ledger entries</caption>
               <thead className="tax-ledger-thead--sticky">
                 <tr>
                   <th scope="col">Date</th>
@@ -564,6 +565,7 @@ function TaxLiabilityPanel({
         />
         <div className="tax-setoff">
           <table className="tax-setoff__table">
+            <caption className="sr-only">Tax payable set-off by tax head</caption>
             <thead>
               <tr>
                 <th scope="col">Head</th>
