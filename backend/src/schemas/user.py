@@ -1,11 +1,11 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from src.models.user import UserRole
 
 
 class UserCreate(BaseModel):
     email: EmailStr
     full_name: str
-    password: str
+    password: str = Field(min_length=8)
     role: UserRole = UserRole.staff
 
 

@@ -7,10 +7,9 @@ validation of email and required fields, and unauthenticated
 access, using the shared TestClient plus db_session fixtures from
 tests/conftest.py.
 
-Note on the short password case: UserCreate sets no minimum length
-on password, so the schema accepts a short password. The test below
-asserts that actual behaviour rather than a rejection the schema
-does not perform.
+Note on the short password case: UserCreate enforces a minimum password
+length of 8, so the schema rejects short passwords with 422. The tests
+below pin both the rejection and that an 8-character password is accepted.
 """
 
 from contextlib import contextmanager
@@ -159,14 +158,20 @@ def test_missing_full_name_returns_422(client):
     assert response.status_code == 422, response.text
 
 
-def test_short_password_is_accepted_by_the_schema(client, db_session):
+def test_short_password_is_rejected_by_the_schema(client, db_session):
     response = _create_user(client, password="x")
+    assert response.status_code == 422, response.text
+    assert db_session.query(User).count() == 0
+
+
+def test_password_at_minimum_length_is_accepted(client, db_session):
+    response = _create_user(client, password="12345678")
     assert response.status_code == 200, response.text
 
     stored = (
         db_session.query(User).filter(User.email == "new@example.com").one()
     )
-    assert verify_password("x", stored.hashed_password)
+    assert verify_password("12345678", stored.hashed_password)
 
 
 def test_unauthenticated_request_gets_401():
