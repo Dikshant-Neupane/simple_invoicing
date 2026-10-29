@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   BadgeCheck,
   ChevronLeft,
@@ -25,6 +25,7 @@ import LoadingState from '../components/LoadingState';
 import PageSizeSelect, { readStoredPageSize, storePageSize } from '../components/PageSizeSelect';
 import SearchInput from '../components/SearchInput';
 import { exportLedgersCsv } from './ledgers/exports';
+import { buildLedgerListParams, parseLedgerListFilters } from '../utils/ledgerListFilters';
 
 /** Monogram for the row avatar — first letters of the first two words. */
 function ledgerInitials(name: string): string {
@@ -68,9 +69,24 @@ export default function LedgersPage() {
   const [pendingDeleteLedgerId, setPendingDeleteLedgerId] = useState<number | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [search, setSearch] = useState('');
-  const [sort, setSort] = useState('name');
-  const [page, setPage] = useState(1);
+  // Search, sort and page live in the URL, like the Day Book page, so a
+  // refresh, a back navigation or a shared link keeps the view. Deriving
+  // them from the query string (rather than initialising state from it)
+  // also makes back and forward update the list without a remount, and
+  // keeps the search input a controlled input driven by the same value
+  // the user just typed, so typing stays immediate with no cursor jump.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { search, sort, page } = parseLedgerListFilters(searchParams);
+
+  // Replace, never push: typing must not stack a history entry per
+  // keystroke, and a filter change should not trap Back behind every
+  // nudge either. Changing search or sort resets to page 1, as before.
+  function updateLedgerFilters(patch: { search?: string; sort?: string; page?: number }) {
+    setSearchParams(
+      buildLedgerListParams({ search, sort, page, ...patch }, searchParams),
+      { replace: true },
+    );
+  }
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [pageSize, setPageSize] = useState(() => readStoredPageSize('ledgers-page-size'));
@@ -122,7 +138,7 @@ export default function LedgersPage() {
   function handlePageSizeChange(nextPageSize: number) {
     storePageSize('ledgers-page-size', nextPageSize);
     setPageSize(nextPageSize);
-    setPage(1);
+    updateLedgerFilters({ page: 1 });
   }
 
   // Currency is only needed to render balances; a failure here leaves the
@@ -231,8 +247,7 @@ export default function LedgersPage() {
               placeholder="Search ledgers by name, GST or contact..."
               value={search}
               onChange={(value) => {
-                setSearch(value);
-                setPage(1);
+                updateLedgerFilters({ search: value, page: 1 });
               }}
             />
             <div>
@@ -245,8 +260,7 @@ export default function LedgersPage() {
                 aria-label="Sort ledgers"
                 value={sort}
                 onChange={(e) => {
-                  setSort(e.target.value);
-                  setPage(1);
+                  updateLedgerFilters({ sort: e.target.value, page: 1 });
                 }}
               >
                 <option value="name">Name A to Z</option>
@@ -437,7 +451,7 @@ export default function LedgersPage() {
                 type="button"
                 className="button button--ghost button--small"
                 disabled={page <= 1}
-                onClick={() => setPage((p) => p - 1)}
+                onClick={() => updateLedgerFilters({ page: page - 1 })}
                 title="Previous page"
                 aria-label="Previous page"
               >
@@ -451,7 +465,7 @@ export default function LedgersPage() {
                 type="button"
                 className="button button--ghost button--small"
                 disabled={page >= totalPages}
-                onClick={() => setPage((p) => p + 1)}
+                onClick={() => updateLedgerFilters({ page: page + 1 })}
                 title="Next page"
                 aria-label="Next page"
               >
