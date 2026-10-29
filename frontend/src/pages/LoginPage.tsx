@@ -5,6 +5,7 @@ import { getApiErrorMessage } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { sanitizeNextPath } from '../utils/nextPath';
 import StatusToasts from '../components/StatusToasts';
+import PasswordInput from '../components/PasswordInput';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -105,11 +106,10 @@ export default function LoginPage() {
 
           <div className="field--full">
             <label htmlFor="password">Password</label>
-            <input
+            <PasswordInput
               id="password"
               className="input"
               placeholder="Enter password"
-              type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               autoComplete="current-password"

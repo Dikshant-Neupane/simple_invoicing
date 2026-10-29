@@ -3,6 +3,7 @@ import { CheckCircle, Pencil, Plus, Send, Trash2 } from 'lucide-react';
 import api, { getApiErrorMessage } from '../api/client';
 import type { SmtpConfig, SmtpConfigCreate, SmtpConfigUpdate } from '../types/api';
 import StatusToasts from '../components/StatusToasts';
+import PasswordInput from '../components/PasswordInput';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useEscapeClose } from '../hooks/useEscapeClose';
 import ModalCloseButton from '../components/ModalCloseButton';
@@ -248,10 +249,9 @@ function SmtpFormModal({ editing, onClose, onSaved, onError }: SmtpFormModalProp
               <label htmlFor="smtp-password">
                 Password{editing ? ' (leave blank to keep current)' : ''}
               </label>
-              <input
+              <PasswordInput
                 id="smtp-password"
                 className="input"
-                type="password"
                 value={form.password}
                 onChange={(e) => set('password', e.target.value)}
                 placeholder={editing ? '••••••••' : ''}
