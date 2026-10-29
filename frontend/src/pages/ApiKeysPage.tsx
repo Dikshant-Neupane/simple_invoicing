@@ -292,7 +292,7 @@ export default function ApiKeysPage() {
                 <th scope="col">Key prefix</th>
                 <th scope="col">Expires</th>
                 <th scope="col">Status</th>
-                <th scope="col" style={{ width: '48px' }} />
+                <th scope="col" style={{ width: '48px' }}><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody>
