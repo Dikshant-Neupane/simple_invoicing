@@ -217,11 +217,11 @@ export default function EmailHistoryPage() {
                   <div
                     style={{
                       padding: '8px 16px',
-                      background: 'var(--color-surface-raised, #fef2f2)',
-                      borderLeft: '3px solid var(--color-error, #e53e3e)',
+                      background: 'var(--color-surface-raised)',
+                      borderLeft: '3px solid var(--color-error)',
                       fontSize: '0.8rem',
                       fontFamily: 'monospace',
-                      color: 'var(--color-error, #c53030)',
+                      color: 'var(--color-error)',
                       marginBottom: '2px',
                     }}
                   >

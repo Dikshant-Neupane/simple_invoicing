@@ -18,7 +18,7 @@ import { EMPTY_CELL, formatUnits } from '../../../features/analytics/productPerf
 import type { ProductPerformanceMonthlyRow } from '../../../features/analytics/types';
 import useMediaQuery, { NARROW_QUERY } from '../../../hooks/useMediaQuery';
 import formatCurrency, { formatCompactCurrency } from '../../../utils/formatting';
-import { chartColors, tooltipStyle } from './chartTheme';
+import { useChartColors, useChartTooltipStyle } from './chartTheme';
 
 /*
  * The four monthly charts on the product page. Each keeps to a single y-axis —
@@ -29,7 +29,6 @@ import { chartColors, tooltipStyle } from './chartTheme';
 
 type Rows = ProductPerformanceMonthlyRow[];
 
-const HOVER_CURSOR = { fill: 'rgba(148, 184, 255, 0.08)' };
 const BAR_RADIUS: [number, number, number, number] = [4, 4, 0, 0];
 
 /** Shared frame: title, height and the x-axis every chart here uses. */
@@ -44,6 +43,7 @@ function ChartPanel({ title, caption, children }: { title: string; caption?: str
 }
 
 function useAxisProps() {
+  const chartColors = useChartColors();
   const narrow = useMediaQuery(NARROW_QUERY);
   return {
     narrow,
@@ -73,6 +73,8 @@ const orDash = (value: unknown, format: (n: number) => string) =>
   typeof value === 'number' ? format(value) : EMPTY_CELL;
 
 export function ProductUnitsChart({ rows }: { rows: Rows }) {
+  const chartColors = useChartColors();
+  const tooltipStyle = useChartTooltipStyle();
   const axis = useAxisProps();
   return (
     <ChartPanel title="Units sold vs bought" caption="Gross units each month; returns shown separately.">
@@ -83,7 +85,7 @@ export function ProductUnitsChart({ rows }: { rows: Rows }) {
           <YAxis {...axis.yAxis} allowDecimals={false} tickFormatter={(value: number) => formatUnits(value)} />
           <Tooltip
             contentStyle={tooltipStyle}
-            cursor={HOVER_CURSOR}
+            cursor={{ fill: chartColors.cursor }}
             formatter={(value: number, name: string) => [formatUnits(value), name]}
           />
           <Legend wrapperStyle={legendStyle} />
@@ -106,6 +108,8 @@ export function ProductProfitChart({
   /** False when the product has no cost: only revenue can be drawn. */
   costed: boolean;
 }) {
+  const chartColors = useChartColors();
+  const tooltipStyle = useChartTooltipStyle();
   const axis = useAxisProps();
   const money = (value: number) => formatCurrency(value, currencyCode);
   return (
@@ -125,7 +129,7 @@ export function ProductProfitChart({
           <ReferenceLine y={0} stroke={chartColors.axis} />
           <Tooltip
             contentStyle={tooltipStyle}
-            cursor={HOVER_CURSOR}
+            cursor={{ fill: chartColors.cursor }}
             formatter={(value: unknown, name: string) => [orDash(value, money), name]}
           />
           <Legend wrapperStyle={legendStyle} />
@@ -158,6 +162,8 @@ export function ProductPriceChart({
   /** The unit cost COGS uses, drawn as a reference; null when unknown. */
   periodCost: number | null;
 }) {
+  const chartColors = useChartColors();
+  const tooltipStyle = useChartTooltipStyle();
   const axis = useAxisProps();
   const money = (value: number) => formatCurrency(value, currencyCode);
   // No purchases in any month: a legend entry with no line would read as a bug.
@@ -216,6 +222,8 @@ export function ProductPriceChart({
 }
 
 export function ProductMarginChart({ rows }: { rows: Rows }) {
+  const chartColors = useChartColors();
+  const tooltipStyle = useChartTooltipStyle();
   const axis = useAxisProps();
   const pct = (value: number) => `${value.toFixed(1)}%`;
   return (
@@ -228,7 +236,7 @@ export function ProductMarginChart({ rows }: { rows: Rows }) {
           <ReferenceLine y={0} stroke={chartColors.axis} />
           <Tooltip
             contentStyle={tooltipStyle}
-            cursor={HOVER_CURSOR}
+            cursor={{ fill: chartColors.cursor }}
             formatter={(value: unknown, name: string) => [orDash(value, pct), name]}
           />
           <Bar dataKey="margin_pct" name="Margin" radius={BAR_RADIUS}>

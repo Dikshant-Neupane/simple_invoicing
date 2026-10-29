@@ -395,7 +395,7 @@ export default function InvoiceDuesPage() {
 
           {remindersSuccess ? (
             <div className="summary-box">
-              <p className="eyebrow" style={{ color: 'var(--success-color, #155724)' }}>{remindersResult}</p>
+              <p className="eyebrow" style={{ color: 'var(--success-color)' }}>{remindersResult}</p>
               <p className="muted-text">{remindersSuccess}</p>
             </div>
           ) : null}

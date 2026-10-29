@@ -190,9 +190,9 @@ export default function KeyboardShortcutsPage() {
                         width: '100%',
                         maxWidth: '200px',
                         background: isRecording
-                          ? 'var(--color-focus-ring, rgba(59,130,246,0.15))'
+                          ? 'var(--color-focus-ring)'
                           : conflict !== null
-                            ? 'var(--color-error-bg, rgba(229,62,62,0.08))'
+                            ? 'var(--color-error-bg)'
                             : undefined,
                       }}
                       onClick={() => setRecording(isRecording ? null : key)}
@@ -213,7 +213,7 @@ export default function KeyboardShortcutsPage() {
                       <p
                         role="alert"
                         style={{
-                          color: 'var(--color-error, #e53e3e)',
+                          color: 'var(--color-error)',
                           fontSize: '0.75rem',
                           marginTop: '4px',
                         }}

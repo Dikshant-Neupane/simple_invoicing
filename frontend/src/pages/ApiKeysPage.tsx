@@ -181,8 +181,8 @@ function RevealModal({ rawKey, name, onClose }: RevealModalProps) {
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
-          background: 'var(--color-surface-2, #f4f4f5)',
-          border: '1px solid var(--color-border, #e4e4e7)',
+          background: 'var(--color-surface-2)',
+          border: '1px solid var(--color-border)',
           borderRadius: '8px',
           padding: '10px 12px',
           fontFamily: 'monospace',
@@ -306,7 +306,7 @@ export default function ApiKeysPage() {
                         {k.key_prefix}…
                       </code>
                     </td>
-                    <td style={{ color: expired ? 'var(--color-danger, #ef4444)' : undefined }}>
+                    <td style={{ color: expired ? 'var(--color-danger)' : undefined }}>
                       {formatExpiry(k.expires_at)}
                     </td>
                     <td>

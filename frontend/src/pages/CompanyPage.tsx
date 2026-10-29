@@ -112,15 +112,15 @@ function LogoUploadCard({
         Upload your company logo (PNG, JPG, JPEG, max 100 KB). It will appear on all generated PDFs.
       </p>
 
-      {error && <p style={{ color: 'var(--color-danger, red)', fontSize: '0.875rem', marginBottom: '8px' }}>{error}</p>}
+      {error && <p style={{ color: 'var(--color-danger)', fontSize: '0.875rem', marginBottom: '8px' }}>{error}</p>}
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
         {logoUrl ? (
-          <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '8px', background: '#f9fafb' }}>
+          <div style={{ border: '1px solid var(--line-neutral)', borderRadius: '8px', padding: '8px', background: 'var(--logo-frame-bg)' }}>
             <img src={logoUrl} alt="Company logo" style={{ maxWidth: '180px', maxHeight: '80px', objectFit: 'contain' }} />
           </div>
         ) : (
-          <div style={{ border: '2px dashed #d1d5db', borderRadius: '8px', padding: '24px 32px', textAlign: 'center', color: '#9ca3af', fontSize: '0.875rem' }}>
+          <div style={{ border: '2px dashed var(--line-neutral-strong)', borderRadius: '8px', padding: '24px 32px', textAlign: 'center', color: 'var(--text-placeholder)', fontSize: '0.875rem' }}>
             No logo uploaded
           </div>
         )}
@@ -200,8 +200,8 @@ function AdditionalInfoSection({
         Text displayed below the logo on all generated PDFs. Use this for taglines, registration details, compliance statements, etc.
       </p>
 
-      {localError && <p style={{ color: 'var(--color-danger, red)', fontSize: '0.875rem', marginBottom: '8px' }}>{localError}</p>}
-      {localSuccess && <p style={{ color: 'var(--color-success, green)', fontSize: '0.875rem', marginBottom: '8px' }}>{localSuccess}</p>}
+      {localError && <p style={{ color: 'var(--color-danger)', fontSize: '0.875rem', marginBottom: '8px' }}>{localError}</p>}
+      {localSuccess && <p style={{ color: 'var(--color-success)', fontSize: '0.875rem', marginBottom: '8px' }}>{localSuccess}</p>}
 
       <textarea
         className="textarea"
@@ -332,8 +332,8 @@ function TermsAndConditionsCard({ companyId }: { companyId: number }) {
         Manage terms that will appear on Sales and Tax Invoices. Terms are automatically serial numbered and appear in order.
       </p>
 
-      {error && <p style={{ color: 'var(--color-danger, red)', fontSize: '0.875rem', marginBottom: '8px' }}>{error}</p>}
-      {success && <p style={{ color: 'var(--color-success, green)', fontSize: '0.875rem', marginBottom: '8px' }}>{success}</p>}
+      {error && <p style={{ color: 'var(--color-danger)', fontSize: '0.875rem', marginBottom: '8px' }}>{error}</p>}
+      {success && <p style={{ color: 'var(--color-success)', fontSize: '0.875rem', marginBottom: '8px' }}>{success}</p>}
 
       {/* Add new term */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
@@ -356,11 +356,11 @@ function TermsAndConditionsCard({ companyId }: { companyId: number }) {
 
       {/* Existing terms list */}
       {terms.length === 0 ? (
-        <p style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No terms added yet.</p>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-placeholder)' }}>No terms added yet.</p>
       ) : (
         <div className="stack" style={{ gap: '8px' }}>
           {terms.map((term) => (
-            <div key={term.id} style={{ border: '1px solid #e5e7eb', borderRadius: '6px', padding: '10px 12px' }}>
+            <div key={term.id} style={{ border: '1px solid var(--line-neutral)', borderRadius: '6px', padding: '10px 12px' }}>
               {editingId === term.id ? (
                 <div>
                   <textarea
@@ -604,8 +604,8 @@ function InvoiceSeriesCard({ sectionRef }: { sectionRef?: React.RefObject<HTMLEl
                 >
                   {saving[s.id] ? 'Saving…' : 'Save'}
                 </button>
-                {rowSuccess[s.id] && <span style={{ color: 'var(--color-success, green)', fontSize: '0.875rem' }}>{rowSuccess[s.id]}</span>}
-                {rowError[s.id] && <span style={{ color: 'var(--color-danger, red)', fontSize: '0.875rem' }}>{rowError[s.id]}</span>}
+                {rowSuccess[s.id] && <span style={{ color: 'var(--color-success)', fontSize: '0.875rem' }}>{rowSuccess[s.id]}</span>}
+                {rowError[s.id] && <span style={{ color: 'var(--color-danger)', fontSize: '0.875rem' }}>{rowError[s.id]}</span>}
               </div>
             </div>
           );
@@ -871,7 +871,7 @@ export default function CompanyPage() {
           className="panel stack"
           ref={companySetupSectionRef}
           tabIndex={-1}
-          style={highlightCompanySetup ? { borderColor: 'var(--color-primary)', boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.25)' } : undefined}
+          style={highlightCompanySetup ? { borderColor: 'var(--color-primary)', boxShadow: '0 0 0 3px rgb(var(--rgb-highlight) / 0.25)' } : undefined}
         >
           <div className="panel__header">
             <div>

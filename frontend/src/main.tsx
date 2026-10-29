@@ -7,6 +7,7 @@ import { queryClient } from './lib/queryClient';
 import { identifyUser, initAnalytics } from './lib/analytics';
 import { isNativeApp } from './lib/nativeBridge';
 import { useAuthStore } from './store/useAuthStore';
+import { initThemeListener } from './store/useThemeStore';
 import './styles.css';
 
 // Starts the session recording. No React provider wraps the tree any more: the
@@ -14,6 +15,10 @@ import './styles.css';
 // and exceptions are reported by the backend where the request that caused them
 // is already known.
 initAnalytics();
+
+// Keeps data-theme in step with the OS while the preference is "system". The
+// inline script in index.html has already set the first value.
+initThemeListener();
 
 // Inside the mobile app the web login never runs -- the app signs in natively
 // and hands us the tokens through localStorage -- so the identify that login()

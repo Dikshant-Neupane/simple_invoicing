@@ -29,6 +29,7 @@ import CompanyPage from './pages/CompanyPage';
 import SmtpSettingsPage from './pages/SmtpSettingsPage';
 import BackupsPage from './pages/BackupsPage';
 import KeyboardShortcutsPage from './pages/KeyboardShortcutsPage';
+import AppearancePage from './pages/AppearancePage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
 import ApiKeysPage from './pages/ApiKeysPage';
 import ConnectedAppsPage from './pages/settings/ConnectedAppsPage';
@@ -233,7 +234,8 @@ function AppRoutes() {
       <Route path="/settings/email-history" element={<SettingsRoute admin><EmailHistoryPage /></SettingsRoute>} />
       <Route path="/settings/security" element={<SettingsRoute><ChangePasswordPage /></SettingsRoute>} />
       <Route path="/settings/shortcuts" element={<SettingsRoute><KeyboardShortcutsPage /></SettingsRoute>} />
-      <Route path="/settings/api-keys" element={<SettingsRoute admin><ApiKeysPage /></SettingsRoute>} />
+      <Route path="/settings/appearance" element={<SettingsRoute requireCompany={false}><AppearancePage /></SettingsRoute>} />
+      <Route path="/settings/api-keys"element={<SettingsRoute admin><ApiKeysPage /></SettingsRoute>} />
       {/* Per-user, not admin-only: a user manages the connectors they themselves consented to. */}
       <Route path="/settings/connected-apps" element={<SettingsRoute><ConnectedAppsPage /></SettingsRoute>} />
       <Route path="/settings/backups" element={<SettingsRoute admin><BackupsPage /></SettingsRoute>} />

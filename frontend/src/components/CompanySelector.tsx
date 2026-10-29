@@ -123,7 +123,7 @@ export default function CompanySelector() {
           <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {activeCompany?.name?.trim() || 'Select company'}
           </span>
-          <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>▾</span>
+          <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>▾</span>
         </button>
         {companyDropdownOpen && (
           <div
@@ -136,7 +136,7 @@ export default function CompanySelector() {
               background: 'var(--bg-card-strong)',
               border: '1px solid var(--line-strong)',
               borderRadius: '0.75rem',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.45)',
+              boxShadow: '0 4px 24px rgb(var(--rgb-shadow) / 0.45)',
               zIndex: 100,
               overflow: 'hidden',
               color: 'var(--text)',
@@ -146,7 +146,7 @@ export default function CompanySelector() {
               <p style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem', opacity: 0.7 }}>Loading companies...</p>
             )}
             {!companiesQuery.isLoading && companyList.length === 0 && (
-              <p style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem', opacity: 0.6 }}>No companies found</p>
+              <p style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem', opacity: 0.8 }}>No companies found</p>
             )}
             {companyList.map((company) => (
               <button
@@ -208,7 +208,7 @@ export default function CompanySelector() {
         )}
       </div>
       {effectiveCompanyError && (
-        <p style={{ marginTop: '-6px', marginBottom: '8px', color: 'var(--error, #ef4444)', fontSize: '0.8rem' }}>
+        <p style={{ marginTop: '-6px', marginBottom: '8px', color: 'var(--error)', fontSize: '0.8rem' }}>
           {effectiveCompanyError}
         </p>
       )}
@@ -251,7 +251,7 @@ export default function CompanySelector() {
                 <p style={{ margin: 0, fontSize: '0.8rem', opacity: 0.7 }}>
                   This creates a blank company profile. You can complete GST, address, and bank details on the Company page.
                 </p>
-                {newCompanyError && <p style={{ margin: 0, color: 'var(--error, #ef4444)', fontSize: '0.85rem' }}>{newCompanyError}</p>}
+                {newCompanyError && <p style={{ margin: 0, color: 'var(--error)', fontSize: '0.85rem' }}>{newCompanyError}</p>}
                 <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
                   <button type="button" className="button button--ghost" onClick={() => setNewCompanyModalOpen(false)}>
                     Cancel

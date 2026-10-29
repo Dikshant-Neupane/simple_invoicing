@@ -73,7 +73,7 @@ function TestEmailModal({ config, onClose }: TestEmailModalProps) {
           {result && (
             <p
               role={result.kind === 'error' ? 'alert' : 'status'}
-              style={{ color: result.kind === 'error' ? 'var(--color-error, #e53e3e)' : 'var(--color-success, #38a169)', fontSize: '0.875rem' }}
+              style={{ color: result.kind === 'error' ? 'var(--color-error)' : 'var(--color-success)', fontSize: '0.875rem' }}
             >
               {result.message}
             </p>
@@ -450,8 +450,8 @@ export default function SmtpSettingsPage() {
                           borderRadius: '999px',
                           fontSize: '0.75rem',
                           fontWeight: 600,
-                          background: config.is_active ? 'var(--color-success-bg, #c6f6d5)' : 'var(--color-muted-bg, #edf2f7)',
-                          color: config.is_active ? 'var(--color-success-text, #22543d)' : 'var(--color-muted-text, #4a5568)',
+                          background: config.is_active ? 'var(--color-success-bg)' : 'var(--color-muted-bg)',
+                          color: config.is_active ? 'var(--color-success-text)' : 'var(--color-muted-text)',
                         }}
                       >
                         {config.is_active ? 'Active' : 'Inactive'}
