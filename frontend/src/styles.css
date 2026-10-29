@@ -5699,6 +5699,31 @@ a.invoice-row {
   color: var(--accent);
 }
 
+.ledger-chip--whatsapp {
+  background: rgba(87, 209, 201, 0.1);
+  border-color: rgba(87, 209, 201, 0.26);
+  color: #a8f0e8;
+}
+
+.ledger-chip--whatsapp > svg {
+  color: var(--accent);
+}
+
+a.ledger-chip:hover {
+  border-color: rgba(148, 184, 255, 0.4);
+  background: rgba(148, 184, 255, 0.14);
+}
+
+a.ledger-chip--whatsapp:hover {
+  border-color: rgba(87, 209, 201, 0.5);
+  background: rgba(87, 209, 201, 0.18);
+}
+
+a.ledger-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .ledger-card__address {
   display: flex;
   align-items: flex-start;
