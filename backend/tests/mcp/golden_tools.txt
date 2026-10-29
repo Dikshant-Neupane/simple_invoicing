@@ -13,6 +13,8 @@ bom_create	POST	/api/bom/
 bom_delete	DELETE	/api/bom/{bom_id}
 bom_get_for_product	GET	/api/bom/product/{product_id}
 bom_update	PUT	/api/bom/{bom_id}
+buyers_create	POST	/api/buyers/
+buyers_list	GET	/api/buyers/
 companies_can_create	GET	/api/company/companies/capability
 companies_create	POST	/api/company/companies
 companies_list	GET	/api/company/companies

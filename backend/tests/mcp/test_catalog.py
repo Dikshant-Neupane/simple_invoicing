@@ -28,8 +28,10 @@ from src.mcp_server.schema import (
 )
 
 # Measured against the real spec on 2026-09-08.
-EXPECTED_OPERATIONS = 149  # 148 tagged + GET /api/health
-EXPECTED_TOOLS = 134  # generated only; `search` and `fetch` are added on top
+EXPECTED_OPERATIONS = 151  # 148 tagged + GET /api/health + 2 buyers routes
+EXPECTED_TOOLS = 136  # generated only; `search` and `fetch` are added on top
+# Mounting the buyers router at /api/buyers added buyers_create and
+# buyers_list, one operation and one tool each.
 # GET /api/analytics/product-performance added one operation and one tool, and
 # GET /api/analytics/product-performance/{product_id} one more of each.
 # GET /api/backups/schedule joined the excluded set when nightly automatic backups
