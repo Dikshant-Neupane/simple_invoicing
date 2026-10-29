@@ -679,7 +679,24 @@ def list_ledgers(
     if company_id is not None:
       query = query.filter(or_(Ledger.company_id == company_id, Ledger.company_id.is_(None)))
     if search.strip():
-        query = query.filter(Ledger.name.ilike(f"%{search.strip()}%"))
+        # Escape LIKE wildcards so a term such as 50% matches literally
+        # instead of matching every ledger. Phone numbers match on the raw
+        # stored text only in this first version, not on digits only.
+        escaped = (
+            search.strip()
+            .replace("\\", "\\\\")
+            .replace("%", "\\%")
+            .replace("_", "\\_")
+        )
+        pattern = f"%{escaped}%"
+        query = query.filter(
+            or_(
+                Ledger.name.ilike(pattern, escape="\\"),
+                Ledger.gst.ilike(pattern, escape="\\"),
+                Ledger.phone_number.ilike(pattern, escape="\\"),
+                Ledger.email.ilike(pattern, escape="\\"),
+            )
+        )
     total = query.count()
     if sort == "balance_desc":
         # Balances come from grouped aggregates, not a column, so ordering in
