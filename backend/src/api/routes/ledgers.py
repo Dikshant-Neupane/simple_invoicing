@@ -654,12 +654,22 @@ def create_ledger(
   return _serialize_ledger(db, ledger, company_id=company_id)
 
 
+# Sort values accepted by list_ledgers. `balance_desc` is not a column, so it
+# is applied in Python from _ledger_balances (see below) rather than in SQL.
+_LEDGER_SORT_ORDERS = {
+    "name": (Ledger.name.asc(), Ledger.id.asc()),
+    "-name": (Ledger.name.desc(), Ledger.id.asc()),
+    "newest": (Ledger.created_at.desc(), Ledger.id.desc()),
+}
+
+
 @router.get("", response_model=PaginatedLedgerOut, include_in_schema=False)
 @router.get("/", response_model=PaginatedLedgerOut)
 def list_ledgers(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=500),
     search: str = Query(""),
+    sort: str = Query("name", pattern="^(name|-name|newest|balance_desc)$"),
     db: Session = Depends(get_db),
     _: User = Depends(get_current_user),
     active_company: CompanyProfile = Depends(get_active_company),
@@ -671,13 +681,35 @@ def list_ledgers(
     if search.strip():
         query = query.filter(Ledger.name.ilike(f"%{search.strip()}%"))
     total = query.count()
-    items = (
-        query.order_by(Ledger.name.asc())
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-        .all()
-    )
-    balances = _ledger_balances(db, [ledger.id for ledger in items], company_id=company_id)
+    if sort == "balance_desc":
+        # Balances come from grouped aggregates, not a column, so ordering in
+        # SQL would need a balance subquery. Sort the matching ids by their
+        # computed balance instead, then page the ordered ids: sorting only
+        # the fetched page would give the wrong order across pages.
+        id_name_rows = query.with_entities(Ledger.id, Ledger.name).all()
+        all_balances = _ledger_balances(db, [row[0] for row in id_name_rows], company_id=company_id)
+        ordered_ids = [
+            row[0]
+            for row in sorted(
+                id_name_rows,
+                key=lambda row: (-all_balances.get(row[0], 0.0), row[1]),
+            )
+        ]
+        page_ids = ordered_ids[(page - 1) * page_size: page * page_size]
+        items_by_id = {
+            ledger.id: ledger
+            for ledger in db.query(Ledger).filter(Ledger.id.in_(page_ids)).all()
+        }
+        items = [items_by_id[ledger_id] for ledger_id in page_ids if ledger_id in items_by_id]
+        balances = all_balances
+    else:
+        items = (
+            query.order_by(*_LEDGER_SORT_ORDERS[sort])
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+        balances = _ledger_balances(db, [ledger.id for ledger in items], company_id=company_id)
     ledgers_out = [
         LedgerOut.model_validate(ledger).model_copy(update={"balance": balances.get(ledger.id, 0.0)})
         for ledger in items

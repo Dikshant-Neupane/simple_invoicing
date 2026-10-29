@@ -67,6 +67,7 @@ export default function LedgersPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [search, setSearch] = useState('');
+  const [sort, setSort] = useState('name');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -80,12 +81,12 @@ export default function LedgersPage() {
     }
   }, [location.state]);
 
-  async function loadLedgers(currentPage: number, currentSearch: string, currentPageSize: number) {
+  async function loadLedgers(currentPage: number, currentSearch: string, currentSort: string, currentPageSize: number) {
     try {
       setLoading(true);
       setError('');
       const res = await api.get<PaginatedLedgers>('/ledgers/', {
-        params: { page: currentPage, page_size: currentPageSize, search: currentSearch },
+        params: { page: currentPage, page_size: currentPageSize, search: currentSearch, sort: currentSort },
       });
       setLedgers(res.data.items);
       setTotal(res.data.total);
@@ -98,8 +99,8 @@ export default function LedgersPage() {
   }
 
   useEffect(() => {
-    void loadLedgers(page, search, pageSize);
-  }, [page, search, pageSize]);
+    void loadLedgers(page, search, sort, pageSize);
+  }, [page, search, sort, pageSize]);
 
   function handlePageSizeChange(nextPageSize: number) {
     storePageSize('ledgers-page-size', nextPageSize);
@@ -206,6 +207,26 @@ export default function LedgersPage() {
                 setPage(1);
               }}
             />
+            <div>
+              <label htmlFor="ledger-sort" className="sr-only">
+                Sort ledgers
+              </label>
+              <select
+                id="ledger-sort"
+                className="input"
+                aria-label="Sort ledgers"
+                value={sort}
+                onChange={(e) => {
+                  setSort(e.target.value);
+                  setPage(1);
+                }}
+              >
+                <option value="name">Name A to Z</option>
+                <option value="-name">Name Z to A</option>
+                <option value="newest">Newest first</option>
+                <option value="balance_desc">Highest balance first</option>
+              </select>
+            </div>
             {!loading && total > 0 ? (
               <p className="ledger-toolbar__count">
                 Showing <strong>{rangeStart}–{rangeEnd}</strong> of {total}
