@@ -4,6 +4,7 @@ import {
   BadgeCheck,
   ChevronLeft,
   ChevronRight,
+  Download,
   Eye,
   Globe,
   Landmark,
@@ -23,6 +24,7 @@ import EmptyState from '../components/EmptyState';
 import LoadingState from '../components/LoadingState';
 import PageSizeSelect, { readStoredPageSize, storePageSize } from '../components/PageSizeSelect';
 import SearchInput from '../components/SearchInput';
+import { exportLedgersCsv } from './ledgers/exports';
 
 /** Monogram for the row avatar — first letters of the first two words. */
 function ledgerInitials(name: string): string {
@@ -72,6 +74,7 @@ export default function LedgersPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [pageSize, setPageSize] = useState(() => readStoredPageSize('ledgers-page-size'));
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     const state = location.state as { success?: string } | null;
@@ -101,6 +104,20 @@ export default function LedgersPage() {
   useEffect(() => {
     void loadLedgers(page, search, sort, pageSize);
   }, [page, search, sort, pageSize]);
+
+  // Exports every ledger the current search and sort select, not just the
+  // visible page: the export pages the list endpoint itself (see ledgers/exports).
+  async function handleExportCsv() {
+    try {
+      setExporting(true);
+      setError('');
+      await exportLedgersCsv(search, sort);
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Unable to export ledgers as CSV'));
+    } finally {
+      setExporting(false);
+    }
+  }
 
   function handlePageSizeChange(nextPageSize: number) {
     storePageSize('ledgers-page-size', nextPageSize);
@@ -169,6 +186,17 @@ export default function LedgersPage() {
         </div>
         <div className="page-hero__actions">
           <div className="status-chip">{total} ledgers listed</div>
+          <button
+            type="button"
+            className="button button--secondary"
+            disabled={exporting || total === 0}
+            onClick={() => void handleExportCsv()}
+            title="Export ledgers as CSV"
+            aria-label="Export ledgers as CSV"
+          >
+            <Download size={16} />
+            {exporting ? 'Exporting…' : 'Export CSV'}
+          </button>
           <button
             className="button button--primary"
             onClick={() => navigate('/ledgers/new')}
