@@ -10,7 +10,8 @@ import InvoicePreview from '../components/InvoicePreview';
 import ConfirmDialog from '../components/ConfirmDialog';
 import formatCurrency from '../utils/formatting';
 import { downloadCsv } from '../utils/csv';
-import { formatInvoiceDateLabel } from '../utils/invoiceDueDate.ts';
+import { formatInvoiceDateLabel, isOverdueInvoice, overdueLabel } from '../utils/invoiceDueDate.ts';
+import OverdueBadge from '../components/OverdueBadge';
 import EmptyState from '../components/EmptyState';
 import LoadingState from '../components/LoadingState';
 
@@ -58,7 +59,8 @@ const DUE_WINDOW_OPTIONS: { value: DueFilterMode; label: string }[] = [
 
 function dueBadgeLabel(dueInDays: number | null) {
   if (dueInDays === null) return 'No due date';
-  if (dueInDays < 0) return `${Math.abs(dueInDays)} days overdue`;
+  const overdue = overdueLabel(dueInDays);
+  if (overdue !== null) return overdue;
   if (dueInDays === 0) return 'Due today';
   return `Due in ${dueInDays} days`;
 }
@@ -403,10 +405,16 @@ export default function InvoiceDuesPage() {
                         Invoice {formatInvoiceDateLabel(invoice.invoice_date)}
                         {' · '}
                         Due {formatInvoiceDateLabel(invoice.due_date)}
+                        {' '}
+                        <OverdueBadge invoice={invoice} />
                       </span>
                       <span className="table-subtext">
-                        {dueBadgeLabel(invoice.due_in_days)}
-                        {' · '}
+                        {isOverdueInvoice(invoice) ? null : (
+                          <>
+                            {dueBadgeLabel(invoice.due_in_days)}
+                            {' · '}
+                          </>
+                        )}
                         Status {invoice.payment_status}
                         {' · '}
                         Remaining {formatCurrency(invoice.outstanding_amount, currencyCode)}
