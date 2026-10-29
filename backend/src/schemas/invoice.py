@@ -183,6 +183,20 @@ class PaginatedInvoiceOut(BaseModel):
     summary: SummaryMeta
 
 
+class DuesAgeingBucketOut(BaseModel):
+    key: str
+    label: str
+    invoice_count: int
+    total_remaining: float
+
+
+class DuesAgeingOut(BaseModel):
+    as_of_date: date
+    buckets: list[DuesAgeingBucketOut]
+    total_invoice_count: int
+    total_remaining: float
+
+
 class OutstandingInvoiceOut(BaseModel):
     id: int
     invoice_number: str | None = None
