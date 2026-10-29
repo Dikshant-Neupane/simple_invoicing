@@ -9,6 +9,7 @@ import DateRangePresets from '../components/DateRangePresets';
 import EmptyState from '../components/EmptyState';
 import LoadingState from '../components/LoadingState';
 import { formatDateTime } from '../utils/formatting';
+import { downloadCsv } from '../utils/csv';
 
 const PAGE_SIZE = 20;
 
@@ -54,6 +55,20 @@ export default function EmailHistoryPage() {
 
   function handleFilterChange() {
     setPage(1);
+  }
+
+  function handleExportEmailCsv() {
+    if (!data) return;
+    downloadCsv(
+      `email_history_${new Date().toISOString().slice(0, 10)}.csv`,
+      ['Date', 'Recipient', 'Subject', 'Status'],
+      data.items.map((log) => [
+        formatDateTime(log.sent_at),
+        log.to_email,
+        log.subject,
+        log.status,
+      ]),
+    );
   }
 
   return (
@@ -150,6 +165,16 @@ export default function EmailHistoryPage() {
             <div>
               <p className="eyebrow">Log</p>
               <h2 className="nav-panel__title">Sent emails</h2>
+            </div>
+            <div className="button-row">
+              <button
+                type="button"
+                className="button button--secondary button--small"
+                disabled={isLoading || !data || data.items.length === 0}
+                onClick={handleExportEmailCsv}
+              >
+                Export CSV
+              </button>
             </div>
           </div>
 
