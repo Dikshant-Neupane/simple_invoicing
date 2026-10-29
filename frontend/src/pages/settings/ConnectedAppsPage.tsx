@@ -123,7 +123,7 @@ export default function ConnectedAppsPage() {
                 <th scope="col">Access</th>
                 <th scope="col">Connected</th>
                 <th scope="col">Last used</th>
-                <th scope="col" style={{ width: '48px' }} />
+                <th scope="col" style={{ width: '48px' }}><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody>
