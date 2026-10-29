@@ -153,33 +153,55 @@ def test_dues_ageing_responds_to_ledger_and_search_filters(client):
         "src.services.invoice_processor.generate_next_number",
         side_effect=lambda *args, **kwargs: next(invoice_numbers),
     ):
-        ledger_id = _create_ledger(client)
+        first_ledger_id = _create_ledger(client)
         product_id = _create_product(client)
         _add_inventory(client, product_id)
         _create_invoice(
             client,
-            ledger_id,
+            first_ledger_id,
             product_id,
             100,
             (today - timedelta(days=10)).isoformat(),
             today.isoformat(),
         )
 
+        # Second ledger with no GST: the ledger API validates the GSTIN
+        # check digit, so no invented GSTIN is used here at all.
+        response = client.post(
+            "/api/ledgers/",
+            json={
+                "name": "Other Ageing Ledger",
+                "address": "Delhi",
+                "phone_number": "8888888888",
+                "email": "other@example.com",
+                "website": "",
+                "bank_name": "",
+                "branch_name": "",
+                "account_name": "",
+                "account_number": "",
+                "ifsc_code": "",
+            },
+        )
+        assert response.status_code == 200, response.text
+        other_ledger_id = response.json()["id"]
+        _create_invoice(
+            client,
+            other_ledger_id,
+            product_id,
+            80,
+            (today - timedelta(days=10)).isoformat(),
+            today.isoformat(),
+        )
+
         by_ledger = client.get(
-            "/api/invoices/dues/ageing", params={"ledger_id": ledger_id}
+            "/api/invoices/dues/ageing", params={"ledger_id": other_ledger_id}
         )
         assert by_ledger.status_code == 200, by_ledger.text
         assert by_ledger.json()["total_invoice_count"] == 1
-        assert by_ledger.json()["total_remaining"] == 100
-
-        by_other_ledger = client.get(
-            "/api/invoices/dues/ageing", params={"ledger_id": ledger_id + 999}
-        )
-        assert by_other_ledger.status_code == 200, by_other_ledger.text
-        assert by_other_ledger.json()["total_invoice_count"] == 0
+        assert by_ledger.json()["total_remaining"] == 80
 
         by_search = client.get(
-            "/api/invoices/dues/ageing", params={"search": "Dues"}
+            "/api/invoices/dues/ageing", params={"search": "Other Ageing"}
         )
         assert by_search.status_code == 200, by_search.text
         assert by_search.json()["total_invoice_count"] == 1
