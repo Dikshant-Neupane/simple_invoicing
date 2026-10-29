@@ -98,7 +98,20 @@ We follow Conventional Commits:
 
 Run tests before opening a PR.
 
+### Frontend unit tests
+
+Run the Vitest suite from the repository root:
+
+```bash
+cd frontend && npm test
+cd frontend && npm test -- --run
+```
+
+The first command starts Vitest in watch mode; use the second for a single run.
+Frontend CI runs the suite before the production build.
+
 ### Frontend E2E
+
 ```bash
 cd frontend
 npm run test:e2e
