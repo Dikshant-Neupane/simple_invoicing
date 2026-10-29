@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Download, FileText, Plus, Search, Upload, X } from 'lucide-react';
+import { Download, FileText, Plus, Upload } from 'lucide-react';
 import api, { getApiErrorMessage } from '../api/client';
 import StatusToasts from '../components/StatusToasts';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -8,6 +8,7 @@ import EmptyState from '../components/EmptyState';
 import LoadingState from '../components/LoadingState';
 import Pagination from '../components/Pagination';
 import Tabs from '../components/Tabs';
+import SearchInput from '../components/SearchInput';
 import BOMConfigModal from '../components/BOMConfigModal';
 import SerialBackfillModal from '../components/SerialBackfillModal';
 import useDebouncedValue from '../hooks/useDebouncedValue';
@@ -467,31 +468,17 @@ export default function CataloguePage() {
           <Tabs tabs={VIEWS.map((v) => ({ id: v.id, label: v.label }))} value={view} onChange={changeView} label="Catalogue views" />
 
           <div className="catalogue-toolbar">
-            <div className="catalogue-search">
-              <Search size={16} className="catalogue-search__icon" aria-hidden="true" />
-              <label className="sr-only" htmlFor="catalogue-search">
-                Search the catalogue
-              </label>
-              <input
-                id="catalogue-search"
-                className="input catalogue-search__input"
-                type="search"
-                placeholder="Search by name, SKU or serial..."
-                value={search}
-                onChange={(e) => changeSearch(e.target.value)}
-              />
-              {search ? (
-                <button
-                  type="button"
-                  className="catalogue-search__clear"
-                  onClick={() => changeSearch('')}
-                  title="Clear search"
-                  aria-label="Clear search"
-                >
-                  <X size={14} aria-hidden="true" />
-                </button>
-              ) : null}
-            </div>
+            <SearchInput
+              id="catalogue-search"
+              wrapperClassName="catalogue-search"
+              inputClassName="input catalogue-search__input"
+              iconClassName="catalogue-search__icon"
+              clearClassName="catalogue-search__clear"
+              label="Search the catalogue"
+              placeholder="Search by name, SKU or serial..."
+              value={search}
+              onChange={changeSearch}
+            />
             <label className="catalogue-filter">
               <span className="catalogue-filter__label">Serials</span>
               {/* A select, not a second tab bar: three more segmented buttons
