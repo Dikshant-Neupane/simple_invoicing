@@ -7,6 +7,7 @@ import ScopeBar, { Metric } from '../components/ScopeBar';
 import DateRangePresets from '../components/DateRangePresets';
 import type { CompanyAccount, CompanyProfile, Ledger, Payment, PaymentCreate, PaymentUpdate } from '../types/api';
 import formatCurrency, { formatDate } from '../utils/formatting';
+import { buildCashBankEditPayload } from '../utils/cashBank';
 import { useFY } from '../context/FYContext';
 import { useEscapeClose } from '../hooks/useEscapeClose';
 import { deepLinkClass, numericParam, useDeepLinkScroll } from '../utils/deepLink';
@@ -59,6 +60,9 @@ export default function CashBankPage() {
     amount: number;
     date: string;
     notes: string;
+    ledger_id: number | null;
+    reference: string | null;
+    mode: string | null;
   }>(null);
 
   const [entryForm, setEntryForm] = useState({
@@ -212,6 +216,9 @@ export default function CashBankPage() {
       amount: Number(payment.amount),
       date: payment.date,
       notes: payment.notes || '',
+      ledger_id: payment.ledger_id ?? null,
+      reference: payment.reference ?? null,
+      mode: payment.mode ?? null,
     });
 
     setEntryForm({
@@ -242,14 +249,11 @@ export default function CashBankPage() {
       setError('');
 
       if (editingEntry) {
-        const payload: PaymentUpdate = {
-          voucher_type: voucherType,
-          amount: entryForm.amount,
-          account_id: selectedAccount.id,
-          date: isoDate,
-          mode: selectedAccount.account_type,
-          notes: entryForm.description.trim() || undefined,
-        };
+        const payload: PaymentUpdate = buildCashBankEditPayload(
+          editingEntry,
+          selectedAccount,
+          entryForm,
+        );
         await api.put<Payment>(`/payments/${editingEntry.id}`, payload);
         setSuccess('Entry updated');
       } else {
