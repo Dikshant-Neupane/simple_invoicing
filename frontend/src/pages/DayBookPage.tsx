@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api, { getApiErrorMessage } from '../api/client';
 import StatusToasts from '../components/StatusToasts';
 import ScopeBar, { Metric } from '../components/ScopeBar';
@@ -7,6 +8,7 @@ import LoadingState from '../components/LoadingState';
 import type { CompanyProfile, DayBook, DayBookEntry } from '../types/api';
 import formatCurrency, { formatDate } from '../utils/formatting';
 import { toIsoDate } from '../utils/dateRanges';
+import { buildDayBookParams, parseDayBookFilters, resolveVoucherType } from '../utils/dayBookFilters';
 import { useFY } from '../context/FYContext';
 
 function defaultDateRange() {
@@ -47,8 +49,11 @@ export default function DayBookPage() {
   }));
   const [dayBook, setDayBook] = useState<DayBook | null>(null);
   const [company, setCompany] = useState<CompanyProfile | null>(null);
-  const [search, setSearch] = useState('');
-  const [voucherType, setVoucherType] = useState('all');
+  // Search and voucher filter live in the URL, like the Catalogue page, so a
+  // refresh, a back navigation or a shared link keeps the view. The date
+  // range keeps its own handling and is deliberately not a URL param here.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { search, voucherType: requestedVoucherType } = parseDayBookFilters(searchParams);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState<'pdf' | 'csv' | null>(null);
   const [error, setError] = useState('');
@@ -102,6 +107,32 @@ export default function DayBookPage() {
     () => [...new Set(allEntries.map((entry) => entry.voucher_type).filter(Boolean))].sort(),
     [allEntries],
   );
+
+  // An unknown `type` in the URL falls back to `all` rather than an empty
+  // register. While entries are still loading the available list is empty,
+  // so resolveVoucherType passes the requested value through and the
+  // decision is made once the entries are known.
+  const voucherType = resolveVoucherType(requestedVoucherType, voucherTypes);
+
+  // Replace, never push: typing must not stack a history entry per keystroke,
+  // and a filter change should not trap Back behind every nudge either.
+  function updateDayBookFilters(patch: { search?: string; voucherType?: string }) {
+    setSearchParams(
+      buildDayBookParams({ search, voucherType, ...patch }, searchParams),
+      { replace: true },
+    );
+  }
+
+  // Once the entries are known, drop an unknown `type` from the URL so the
+  // link itself becomes the view the page actually shows.
+  useEffect(() => {
+    if (dayBook && requestedVoucherType !== 'all' && !voucherTypes.includes(requestedVoucherType)) {
+      setSearchParams(
+        buildDayBookParams({ search, voucherType: 'all' }, searchParams),
+        { replace: true },
+      );
+    }
+  }, [dayBook, requestedVoucherType, voucherTypes, search, searchParams, setSearchParams]);
 
   // Narrowing the loaded period is a scan of at most a few thousand rows, and
   // doing it here rather than server-side keeps it instant as you type.
@@ -233,7 +264,7 @@ export default function DayBookPage() {
             id="day-book-voucher-type"
             className="select"
             value={voucherType}
-            onChange={(event) => setVoucherType(event.target.value)}
+            onChange={(event) => updateDayBookFilters({ voucherType: event.target.value })}
           >
             <option value="all">All types</option>
             {voucherTypes.map((type) => (
@@ -249,7 +280,7 @@ export default function DayBookPage() {
             type="search"
             placeholder="Reference, ledger or particulars"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => updateDayBookFilters({ search: event.target.value })}
           />
         </div>
       </ScopeBar>
@@ -262,7 +293,7 @@ export default function DayBookPage() {
               <h2 className="nav-panel__title">Voucher register</h2>
             </div>
             {filtered ? (
-              <button type="button" className="button button--ghost button--small" onClick={() => { setSearch(''); setVoucherType('all'); }}>
+              <button type="button" className="button button--ghost button--small" onClick={() => updateDayBookFilters({ search: '', voucherType: 'all' })}>
                 Clear filters
               </button>
             ) : null}
