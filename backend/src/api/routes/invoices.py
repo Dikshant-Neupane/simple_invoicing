@@ -20,7 +20,7 @@ from src.models.invoice import Invoice, InvoiceItem
 from src.models.product import Product
 from src.models.product_serial import ProductSerial
 from src.models.user import User
-from src.schemas.invoice import InvoiceCreate, InvoiceOut, PaginatedInvoiceOut
+from src.schemas.invoice import DuesAgeingOut, InvoiceCreate, InvoiceOut, PaginatedInvoiceOut
 from src.api.deps import get_active_company, get_current_user
 from src.core.analytics import distinct_id_for, track
 from src.services.financial_year import get_active_fy, get_fy_for_date
@@ -443,6 +443,135 @@ def export_invoices_csv(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+def _outstanding_due_invoices(
+    db: Session,
+    company_id: int,
+    search: str = "",
+    ledger_id: int | None = None,
+    due_date_from: date | None = None,
+    due_date_to: date | None = None,
+):
+    """Shared dues query for the list and the ageing summary.
+
+    Returns the outstanding sales invoices with a due date, after dropping
+    invoices with nothing remaining and ledgers whose receivable is fully
+    offset by payables. Both surfaces read the same rows, so the tiles and
+    the list can never disagree about which invoices count.
+    """
+    base = (
+        db.query(Invoice)
+        .options(joinedload(Invoice.ledger), joinedload(Invoice.items))
+        .filter(
+            Invoice.company_id == company_id,
+            Invoice.voucher_type == "sales",
+            Invoice.status == "active",
+            Invoice.due_date.isnot(None),
+        )
+    )
+
+    if ledger_id is not None:
+        base = base.filter(Invoice.ledger_id == ledger_id)
+    if search.strip():
+        base = base.filter(Invoice.ledger_name.ilike(f"%{search.strip()}%"))
+    if due_date_from is not None:
+        base = base.filter(Invoice.due_date >= datetime.combine(due_date_from, datetime.min.time()))
+    if due_date_to is not None:
+        base = base.filter(Invoice.due_date <= datetime.combine(due_date_to, datetime.max.time()))
+
+    invoices = base.order_by(Invoice.due_date.asc(), Invoice.invoice_date.asc(), Invoice.id.asc()).all()
+    payment_summaries = build_invoice_payment_summaries(db, invoices)
+    outstanding_invoices = [
+        invoice
+        for invoice in invoices
+        if payment_summaries[invoice.id].remaining_amount > 0
+    ]
+
+    # Ledgers that are also suppliers: what we owe them is shown next to the dues,
+    # and a ledger whose receivable is fully offset by payables is not chased.
+    open_amounts = open_amounts_by_ledger(
+        db,
+        list({invoice.ledger_id for invoice in outstanding_invoices if invoice.ledger_id is not None}),
+        company_id=company_id,
+    )
+    outstanding_invoices = [
+        invoice
+        for invoice in outstanding_invoices
+        if not is_offset_by_payables(*open_amounts.get(invoice.ledger_id, (0.0, 0.0)))
+    ]
+    return outstanding_invoices, payment_summaries, open_amounts
+
+
+_AGEING_BUCKETS = [
+    ("not_yet_due", "Not yet due"),
+    ("1_30", "1 to 30 days overdue"),
+    ("31_60", "31 to 60 days overdue"),
+    ("61_90", "61 to 90 days overdue"),
+    ("over_90", "Over 90 days overdue"),
+]
+
+
+def _ageing_bucket_key(days_overdue: int) -> str:
+    if days_overdue <= 0:
+        return "not_yet_due"
+    if days_overdue <= 30:
+        return "1_30"
+    if days_overdue <= 60:
+        return "31_60"
+    if days_overdue <= 90:
+        return "61_90"
+    return "over_90"
+
+
+@router.get("/dues/ageing", response_model=DuesAgeingOut)
+def dues_ageing_summary(
+    search: str = Query(""),
+    ledger_id: int | None = Query(None),
+    due_date_from: date | None = Query(None),
+    due_date_to: date | None = Query(None),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+    active_company: CompanyProfile = Depends(get_active_company),
+):
+    """Bucket outstanding dues by days past the due date.
+
+    Uses the server date, the same definition of overdue as the dashboard,
+    so the two surfaces agree. An invoice due today counts as not yet due.
+    """
+    try:
+        today = date.today()
+        outstanding_invoices, payment_summaries, _ = _outstanding_due_invoices(
+            db,
+            active_company.id,
+            search=search,
+            ledger_id=ledger_id,
+            due_date_from=due_date_from,
+            due_date_to=due_date_to,
+        )
+        totals: dict[str, Decimal] = {key: Decimal("0") for key, _ in _AGEING_BUCKETS}
+        counts: dict[str, int] = {key: 0 for key, _ in _AGEING_BUCKETS}
+        for invoice in outstanding_invoices:
+            days_overdue = (today - invoice.due_date.date()).days
+            key = _ageing_bucket_key(days_overdue)
+            totals[key] += Decimal(str(payment_summaries[invoice.id].remaining_amount or 0))
+            counts[key] += 1
+        return DuesAgeingOut(
+            as_of_date=today,
+            buckets=[
+                {
+                    "key": key,
+                    "label": label,
+                    "invoice_count": counts[key],
+                    "total_remaining": float(totals[key]),
+                }
+                for key, label in _AGEING_BUCKETS
+            ],
+            total_invoice_count=len(outstanding_invoices),
+            total_remaining=float(sum(totals.values(), Decimal("0"))),
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/dues", response_model=PaginatedInvoiceOut)
 def list_due_invoices(
     page: int = Query(1, ge=1),
@@ -456,46 +585,14 @@ def list_due_invoices(
     active_company: CompanyProfile = Depends(get_active_company),
 ):
     try:
-        base = (
-            db.query(Invoice)
-            .options(joinedload(Invoice.ledger), joinedload(Invoice.items))
-            .filter(
-                Invoice.company_id == active_company.id,
-                Invoice.voucher_type == "sales",
-                Invoice.status == "active",
-                Invoice.due_date.isnot(None),
-            )
-        )
-
-        if ledger_id is not None:
-            base = base.filter(Invoice.ledger_id == ledger_id)
-        if search.strip():
-            base = base.filter(Invoice.ledger_name.ilike(f"%{search.strip()}%"))
-        if due_date_from is not None:
-            base = base.filter(Invoice.due_date >= datetime.combine(due_date_from, datetime.min.time()))
-        if due_date_to is not None:
-            base = base.filter(Invoice.due_date <= datetime.combine(due_date_to, datetime.max.time()))
-
-        invoices = base.order_by(Invoice.due_date.asc(), Invoice.invoice_date.asc(), Invoice.id.asc()).all()
-        payment_summaries = build_invoice_payment_summaries(db, invoices)
-        outstanding_invoices = [
-            invoice
-            for invoice in invoices
-            if payment_summaries[invoice.id].remaining_amount > 0
-        ]
-
-        # Ledgers that are also suppliers: what we owe them is shown next to the dues,
-        # and a ledger whose receivable is fully offset by payables is not chased.
-        open_amounts = open_amounts_by_ledger(
+        outstanding_invoices, payment_summaries, open_amounts = _outstanding_due_invoices(
             db,
-            list({invoice.ledger_id for invoice in outstanding_invoices if invoice.ledger_id is not None}),
-            company_id=active_company.id,
+            active_company.id,
+            search=search,
+            ledger_id=ledger_id,
+            due_date_from=due_date_from,
+            due_date_to=due_date_to,
         )
-        outstanding_invoices = [
-            invoice
-            for invoice in outstanding_invoices
-            if not is_offset_by_payables(*open_amounts.get(invoice.ledger_id, (0.0, 0.0)))
-        ]
 
         total = len(outstanding_invoices)
         page_start = (page - 1) * page_size

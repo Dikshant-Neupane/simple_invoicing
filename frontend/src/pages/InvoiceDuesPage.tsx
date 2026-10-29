@@ -15,6 +15,7 @@ import { buildWhatsAppReminderMessage } from '../utils/whatsappReminder';
 import { downloadCsv } from '../utils/csv';
 import { formatInvoiceDateLabel, isOverdueInvoice, overdueLabel } from '../utils/invoiceDueDate.ts';
 import OverdueBadge from '../components/OverdueBadge';
+import DuesAgeingStrip from '../components/DuesAgeingStrip';
 import EmptyState from '../components/EmptyState';
 import LoadingState from '../components/LoadingState';
 
@@ -355,6 +356,14 @@ export default function InvoiceDuesPage() {
           </div>
         ) : null}
       </ScopeBar>
+
+      <DuesAgeingStrip
+        search={search}
+        ledgerId={ledgerId}
+        dueDateFrom={dueWindow.dueDateFrom}
+        dueDateTo={dueWindow.dueDateTo}
+        currencyCode={currencyCode}
+      />
 
       <section className="content-grid content-grid--single">
         <article className="panel stack">

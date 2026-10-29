@@ -167,6 +167,20 @@ export type PaginatedInvoices = {
   };
 };
 
+export type DuesAgeingBucket = {
+  key: string;
+  label: string;
+  invoice_count: number;
+  total_remaining: number;
+};
+
+export type DuesAgeing = {
+  as_of_date: string;
+  buckets: DuesAgeingBucket[];
+  total_invoice_count: number;
+  total_remaining: number;
+};
+
 export type CreditNoteType = 'return' | 'discount' | 'adjustment';
 export type CreditNoteStatus = 'active' | 'cancelled';
 // Outward is a note we issued against a sale. Inward is the supplier's own
